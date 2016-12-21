@@ -1,0 +1,39 @@
+module.exports = request => {
+
+	const {{className}} = { name: '{{className}}' };
+
+	{{#methods}}
+	{{className}}.{{method}} = {{className}}._{{method}} = function() {
+
+		return request({
+			modelName:      {{className}}.name,
+			methodName:     '{{method}}',
+			httpMethod:     '{{httpMethod}}',
+			path:           '{{{path}}}',
+			params:         {{{arguments}}},
+			{{#withoutPayload}}withoutPayload: {{withoutPayload}},
+			{{/withoutPayload}}args:           Array.prototype.slice.call(arguments)
+		});
+
+	};
+
+	{{#aliases}}
+	{{className}}.{{.}} = {{className}}._{{.}} = function() {
+
+		return request({
+			modelName:      {{className}}.name,
+			methodName:     '{{.}}',
+			httpMethod:     '{{httpMethod}}',
+			path:           '{{{path}}}',
+			params:         {{{arguments}}},
+			{{#withoutPayload}}withoutPayload: {{withoutPayload}},
+			{{/withoutPayload}}args:           Array.prototype.slice.call(arguments)
+		});
+
+	};
+	{{/aliases}}
+
+	{{/methods}}
+	return {{className}};
+
+};
