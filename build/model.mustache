@@ -3,7 +3,7 @@ module.exports = request => {
 	const {{className}} = { name: '{{className}}' };
 
 	{{#methods}}
-	{{className}}.{{method}} = {{className}}._{{method}} = function() {
+	{{className}}.{{method}} = function() {
 
 		return request({
 			modelName:      {{className}}.name,
@@ -11,14 +11,15 @@ module.exports = request => {
 			httpMethod:     '{{httpMethod}}',
 			path:           '{{{path}}}',
 			params:         {{{arguments}}},
-			{{#withoutPayload}}withoutPayload: {{withoutPayload}},
+			{{#usesFormData}}usesFormData:   {{usesFormData}},
+			{{/usesFormData}}{{#withoutPayload}}withoutPayload: {{withoutPayload}},
 			{{/withoutPayload}}args:           Array.prototype.slice.call(arguments)
 		});
 
 	};
 
 	{{#aliases}}
-	{{className}}.{{.}} = {{className}}._{{.}} = function() {
+	{{className}}.{{.}} = function() {
 
 		return request({
 			modelName:      {{className}}.name,
@@ -26,7 +27,8 @@ module.exports = request => {
 			httpMethod:     '{{httpMethod}}',
 			path:           '{{{path}}}',
 			params:         {{{arguments}}},
-			{{#withoutPayload}}withoutPayload: {{withoutPayload}},
+			{{#usesFormData}}usesFormData:   {{usesFormData}},
+			{{/usesFormData}}{{#withoutPayload}}withoutPayload: {{withoutPayload}},
 			{{/withoutPayload}}args:           Array.prototype.slice.call(arguments)
 		});
 

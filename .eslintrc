@@ -7,6 +7,10 @@
     "globals": {
         "it": true,
         "describe": true,
+        "before": true,
+        "beforeEach": true,
+        "after": true,
+        "afterEach": true
     },
     "parserOptions": {
         "ecmaVersion": 6,

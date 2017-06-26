@@ -4,6 +4,7 @@ const _ = require('lodash');
 const gulp = require('gulp');
 const rename = require('gulp-rename');
 const mustache = require('gulp-mustache');
+const clean = require('gulp-clean');
 const uglify = require('gulp-uglify');
 const buffer = require('vinyl-buffer');
 const source = require('vinyl-source-stream');
@@ -16,7 +17,7 @@ apis.forEach(a => {
 
 	_.forEach(aliases, (v, k) => {
 
-		a.arguments = '[' + a.arguments.map(a => `'${ a }'`).join(", ") + ']';
+		a.arguments = '[' + a.arguments.map(a => `'${ a }'`).join(', ') + ']';
 
 		if (!a.method.includes(k)) return;
 
@@ -57,7 +58,16 @@ const clients = {
 
 const ext = '.js';
 
-gulp.task(`models`, () => {
+gulp.task('clean', () => {
+
+	const clientNames = _.keys(clients);
+
+	return gulp.src(clientNames.map(clientName => `./lib/models-${ clientName }/*`), { read: false })
+		.pipe(clean());
+
+});
+
+gulp.task(`models`, ['clean'], () => {
 
 	_.forEach(clients, (spec, clientName) => {
 
@@ -81,7 +91,7 @@ gulp.task(`models`, () => {
 
 });
 
-gulp.task(`binder`, () => {
+gulp.task(`binder`, ['models'], () => {
 
 	_.forEach(clients, (spec, clientName) => {
 
@@ -97,7 +107,7 @@ gulp.task(`binder`, () => {
 
 });
 
-gulp.task('compile:js', ['models', 'binder'], () => {
+gulp.task('compile', ['binder'], () => {
 
 	browserify('./lib/client-js')
 		.transform('babelify', { presets: ['es2015'] })
@@ -130,4 +140,4 @@ gulp.task('compile:js', ['models', 'binder'], () => {
 
 });
 
-gulp.task('default', ['models', 'binder']);
+gulp.task('default', ['compile']);
