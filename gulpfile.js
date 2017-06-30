@@ -17,8 +17,6 @@ apis.forEach(a => {
 
 	_.forEach(aliases, (v, k) => {
 
-		a.arguments = '[' + a.arguments.map(a => `'${ a }'`).join(', ') + ']';
-
 		if (!a.method.includes(k)) return;
 
 		a.aliases = (a.aliases || []).concat(v.map(alias => a.method.replace(k, alias)));
@@ -32,14 +30,6 @@ const toModels = apis => _.uniq(apis.map(a => a.className)).map(className => ({
 	modelName: _.camelCase(className)
 }));
 
-const groupByModel = apis => apis.reduce((o, a) => {
-
-	o[a.modelName] = (o[a.modelName] || []).concat(a);
-
-	return o;
-
-}, {});
-
 const nodeAPIs = _.cloneDeep(apis);
 const jsAPIs = _.cloneDeep(apis.filter(a => a.access.public));
 
@@ -47,12 +37,12 @@ const clients = {
 	node: {
 		apis:    nodeAPIs,
 		models:  toModels(nodeAPIs).sort((a, b) => a.modelName.localeCompare(b.modelName)),
-		byModel: groupByModel(nodeAPIs)
+		byModel: _.groupBy(nodeAPIs, a => a.className)
 	},
 	js:   {
 		apis:    jsAPIs,
 		models:  toModels(jsAPIs).sort((a, b) => a.modelName.localeCompare(b.modelName)),
-		byModel: groupByModel(jsAPIs)
+		byModel: _.groupBy(jsAPIs, a => a.className)
 	},
 };
 

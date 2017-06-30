@@ -1,7 +1,7 @@
 {
   "name": "clayful",
   "version": "0.0.0",
-  "description": "Clayful JavaScript & Node.js Library",
+  "description": "JavaScript & Node.js SDK for Clayful API",
   "keywords": [
     "eCommerce",
     "clayful"

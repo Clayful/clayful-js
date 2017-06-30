@@ -10,7 +10,7 @@ module.exports = request => {
 			methodName:     '{{method}}',
 			httpMethod:     '{{httpMethod}}',
 			path:           '{{{path}}}',
-			params:         {{{arguments}}},
+			params:         [{{#arguments}}'{{{.}}}', {{/arguments}}],
 			{{#usesFormData}}usesFormData:   {{usesFormData}},
 			{{/usesFormData}}{{#withoutPayload}}withoutPayload: {{withoutPayload}},
 			{{/withoutPayload}}args:           Array.prototype.slice.call(arguments)
@@ -26,7 +26,7 @@ module.exports = request => {
 			methodName:     '{{.}}',
 			httpMethod:     '{{httpMethod}}',
 			path:           '{{{path}}}',
-			params:         {{{arguments}}},
+			params:         [{{#arguments}}'{{{.}}}', {{/arguments}}],
 			{{#usesFormData}}usesFormData:   {{usesFormData}},
 			{{/usesFormData}}{{#withoutPayload}}withoutPayload: {{withoutPayload}},
 			{{/withoutPayload}}args:           Array.prototype.slice.call(arguments)
