@@ -1,21 +1,23 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 
-function ClayfulError(modelName, methodName, status, errorCode, message) {
+function ClayfulError(modelName, methodName, status, headers, errorCode, message, validation) {
 
-	this.name = 'ClayfulError';
 	this.stack = new Error().stack;
 
-	this.isClayful = true;
 	this.model = modelName;
 	this.method = methodName;
 	this.status = status;
+	this.headers = headers;
 	this.code = errorCode;
 	this.message = message;
+	this.validation = validation;
 }
 
-ClayfulError.prototype = Object.create(Error.prototype);
+ClayfulError.prototype = new Error();
 ClayfulError.prototype.constructor = ClayfulError;
+ClayfulError.prototype.name = 'ClayfulError';
+ClayfulError.prototype.isClayful = true;
 
 module.exports = ClayfulError;
 
@@ -25,196 +27,122 @@ module.exports = ClayfulError;
 var ClayfulError = require('../clayful-error');
 var assign = require('../util/assign');
 
-module.exports = function (models, credentials) {
+var Clayful = {
+	baseUrl: 'https://api.clayful.io', // base url for API request
+	defaultHeaders: {}, // extra headers to extend default request headers
+	plugins: {
+		request: null // request middleware
+	}
+};
 
-	// Clayful API public instance
-	var clayful = {
-		options: {
-			baseUrl: 'https://api.clayful.io', // base url for API request
-			errorLanguage: 'en', // error language to use (for API errors)
-			renewTokenBefore: 60 * 5, // when to renew access token (in seconds, default = 5 minutes before existing token expires)
-			extraHeaders: {} },
-		credentials: assign({
-			customer: null, // customer token (it will set 'X-Clayful-Customer-Token')
-			clientId: null,
-			clientSecret: null
-		}, credentials),
-		plugins: {
-			tokenStorage: null,
-			request: null
-		}
+Clayful.optionsToHeaders = function () {
+	var o = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+
+	var headers = {};
+
+	if (o.language) {
+		headers['Accept-Language'] = o.language;
+	}
+
+	if (o.currency) {
+		headers['Accept-Currency'] = o.currency;
+	}
+
+	if (o.timeZone) {
+		headers['Accept-Time-Zone'] = o.timeZone;
+	}
+
+	if (o.client) {
+		headers['Authorization'] = 'Bearer ' + o.client;
+	}
+
+	if (o.customer) {
+		headers['X-Clayful-Customer-Authorization'] = 'Bearer ' + o.customer;
+	}
+
+	if (o.errorLanguage) {
+		headers['X-Clayful-Error-Language'] = o.errorLanguage;
+	}
+
+	if (o.headers) {
+		assign(headers, o.headers);
+	}
+
+	return headers;
+};
+
+Clayful.getEndpoint = function (path) {
+	return '' + Clayful.baseUrl + path;
+};
+
+Clayful.wrapRequestCallback = function (requestDetail) {
+	return function (err, result) {
+		return requestDetail.callback(err, result, requestDetail);
+	};
+};
+
+Clayful.extractRequestArguments = function (options) {
+
+	var result = {
+		httpMethod: options.httpMethod,
+		payload: null
 	};
 
-	// Configure clayful instance
-	clayful.config = function (o) {
-		return assign(clayful.options, o);
-	};
+	var rest = options.args.slice(options.params.length);
 
-	// Uses plugins. e.g., Token storage, request middleware...
-	clayful.install = function (scope, plugin) {
-		return clayful.plugins[scope] = plugin;
-	};
+	result.requestUrl = options.params.reduce(function (requestUrl, param, i) {
+		return requestUrl.replace('{' + param + '}', options.args[i]);
+	}, options.path);
+	result.callback = rest.pop();
 
-	// Sets default customer token
-	clayful.customer = function (token) {
-		return clayful.credentials.customer = token;
-	};
+	if (typeof result.callback !== 'function') {
 
-	// Get API endpoint
-	clayful.getEndpoint = function (path) {
-		return '' + clayful.options.baseUrl + path;
-	};
+		rest.push(result.callback); // restore rest array
+		result.callback = function () {}; // Put an empty function as default if the last argument isn't a function,
+	}
 
-	clayful.wrapRequestCallback = function (requestDetail) {
-		return function (err, result) {
-			return requestDetail.callback(err, result, requestDetail);
-		};
-	};
+	if ((options.httpMethod === 'POST' || options.httpMethod === 'PUT') && !options.withoutPayload) {
 
-	// Default header factory
-	clayful.getDefaultHeaders = function (withAuthorization) {
+		result.payload = rest.shift() || null;
+	}
 
-		var headers = assign({
-			'X-Clayful-Error-Language': clayful.options.errorLanguage
-		}, clayful.options.extraHeaders);
+	var queryHeaders = rest.shift() || {};
 
-		if (clayful.credentials.customer && !clayful.shouldRenewToken()) {
+	result.query = queryHeaders.query || {};
+	result.headers = Clayful.optionsToHeaders(queryHeaders || {});
 
-			// Set customer token automatically
-			headers['X-Clayful-Customer-Authorization'] = clayful.credentials.customer;
-		}
+	return result;
+};
 
-		if (withAuthorization) {
-			var _clayful$plugins$toke = clayful.plugins.tokenStorage.getToken(),
-			    token = _clayful$plugins$toke.token;
+Clayful.callAPI = function (options) {
 
-			headers.Authorization = 'Bearer ' + token;
-		}
+	var request = Clayful.plugins.request;
+	var extracted = Clayful.extractRequestArguments(options);
 
-		return headers;
-	};
+	assign(extracted, {
+		requestUrl: Clayful.getEndpoint(extracted.requestUrl),
+		modelName: options.modelName,
+		methodName: options.methodName,
+		usesFormData: options.usesFormData
+	});
 
-	// Check whether cached token expires in milliseconds
-	clayful.shouldRenewToken = function () {
+	// Extend & overide default headers before making a request
+	var copied = assign({}, Clayful.defaultHeaders);
 
-		var tokenDetails = clayful.plugins.tokenStorage.getToken();
+	extracted.headers = assign(copied, extracted.headers);
 
-		if (!tokenDetails) {
+	// ClayfulError should be used for generating API errors from Clayful API
+	return request(extracted, ClayfulError, Clayful.wrapRequestCallback(extracted));
+};
 
-			return true;
-		}
+// Set model APIs
+Clayful.setModels = function (models) {
 
-		var tokenExpiresAt = tokenDetails.tokenExpiresAt;
-
-
-		var renewTokenBefore = clayful.options.renewTokenBefore;
-
-		return tokenExpiresAt - Date.now() <= renewTokenBefore * 1000;
-	};
-
-	clayful.extractRequestArguments = function (options) {
-
-		var result = {
-			httpMethod: options.httpMethod
-		};
-
-		var rest = options.args.slice(options.params.length);
-
-		result.requestUrl = options.params.reduce(function (requestUrl, param, i) {
-			return requestUrl.replace('{' + param + '}', options.args[i]);
-		}, options.path);
-		result.callback = rest.pop();
-
-		if (typeof result.callback !== 'function') {
-
-			rest.push(result.callback); // restore rest array
-			result.callback = function () {}; // Put an empty function as default if the last argument isn't a function,
-		}
-
-		var queryHeaders = {};
-
-		/**
-   * (...params, { query, headers }, callback)
-   * where query, headers are optional (if the endpoint doesn't have any params, ...params are also optional)
-   */
-
-		if (options.httpMethod === 'GET' || options.httpMethod === 'DELETE') {
-
-			queryHeaders = rest[0] || {};
-		}
-
-		/**
-   * (...params, payload, { query, headers }, callback)
-   * where payload, query, headers are optional (if the endpoint doesn't have any params, ...params are also optional)
-   */
-
-		if (options.httpMethod === 'PUT' || options.httpMethod === 'POST') {
-
-			// do not use a default object for payload since it undefined and {} has different semantics
-			result.payload = options.withoutPayload ? undefined : rest[0];
-
-			queryHeaders = (options.withoutPayload ? rest[0] : rest[1]) || {};
-		}
-
-		result.query = queryHeaders.query || {};
-		result.headers = queryHeaders.headers || {};
-
-		// Set customer token
-		if (queryHeaders.customer) {
-
-			result.headers['X-Clayful-Customer-Authorization'] = queryHeaders.customer;
-		}
-
-		return result;
-	};
-
-	// Authorization request method (should be implemented by clients)
-	clayful.authenticate = function (callback) {};
-
-	clayful.callAPI = function (options) {
-
-		var extracted = clayful.extractRequestArguments(options);
-
-		assign(extracted, {
-			requestUrl: clayful.getEndpoint(extracted.requestUrl),
-			modelName: options.modelName,
-			methodName: options.methodName
-		});
-
-		var makeApiCall = function makeApiCall() {
-
-			// Extend & overide headers before making a request
-			extracted.headers = assign(clayful.getDefaultHeaders(true), extracted.headers);
-
-			// ClayfulError should be used to generate API errors from Clayful API
-			return clayful.plugins.request(extracted, ClayfulError, clayful.wrapRequestCallback(extracted));
-		};
-
-		if (!clayful.shouldRenewToken()) {
-
-			return makeApiCall();
-		}
-
-		return clayful.authenticate(function (err, result) {
-
-			if (err) {
-				return extracted.callback(err);
-			}
-
-			// Cache access token
-			clayful.plugins.tokenStorage.setToken({
-				token: result.access_token,
-				tokenExpiresAt: Date.now() + result.expires_in * 1000 // Since expires_in is in seconds, convert to milliseconds to cache an expiration time.
-			});
-
-			return makeApiCall();
-		});
-	};
-
-	var allModels = models(clayful.callAPI);
+	var allModels = models(Clayful.callAPI);
 
 	// Get all models
-	clayful.models = function () {
+	Clayful.models = function () {
 
 		var models = [];
 
@@ -226,394 +154,47 @@ module.exports = function (models, credentials) {
 	};
 
 	// Extend clayful object with models and methods
-	return assign(clayful, allModels);
+	return assign(Clayful, allModels);
 };
 
-},{"../clayful-error":1,"../util/assign":34}],3:[function(require,module,exports){
+// Configures SDK options
+Clayful.config = function () {
+	var o = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	return assign(Clayful.defaultHeaders, Clayful.optionsToHeaders(o));
+};
+
+// Install plugins. e.g., request middleware
+Clayful.install = function (plugin, options) {
+
+	Clayful.plugins[plugin] = Clayful.plugins[plugin] ? Clayful.plugins[plugin](options) : // use plug-in as a factory function
+	options; // or use options as a factory function or a function
+};
+
+module.exports = Clayful;
+
+},{"../clayful-error":1,"../util/assign":26}],3:[function(require,module,exports){
 'use strict';
 
-var ClayfulFactory = require('../clayful');
-var ClayfulError = require('../clayful-error');
+var Clayful = require('../clayful');
 var models = require('../models-js');
-var LocalTokenStorage = require('../plugins/token-local-storage');
 
-var Clayful = function Clayful(options) {
+Clayful.defaultHeaders['X-Clayful-SDK'] = 'clayful-js';
 
-	"use strict";
-
-	var clayful = ClayfulFactory(models, options);
-
-	clayful.config({
-		extraHeaders: {
-			'X-Clayful-SDK': 'clayful-js'
-		}
-	});
-
-	clayful.install('tokenStorage', new LocalTokenStorage('cfl-token')); // default to localStorage
-
-	// Authenticate with `clayful/client_implicit` strategy
-	clayful.authenticate = function (callback) {
-
-		var requestDetail = {
-			httpMethod: 'POST',
-			requestUrl: clayful.getEndpoint('/token'),
-			payload: {
-				grant_type: 'http://clayful.io/oauth/grant-type/client-implicit',
-				client_id: clayful.credentials.clientId
-			},
-			query: {},
-			headers: clayful.getDefaultHeaders(),
-			callback: callback
-		};
-
-		return clayful.plugins.request(requestDetail, ClayfulError, clayful.wrapRequestCallback(requestDetail));
-	};
-
-	return clayful;
-};
+Clayful.setModels(models);
 
 module.exports = window.Clayful = Clayful;
 
-},{"../clayful":2,"../clayful-error":1,"../models-js":17,"../plugins/token-local-storage":33}],4:[function(require,module,exports){
+},{"../clayful":2,"../models-js":13}],4:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var BlogCategory = { name: 'BlogCategory' };
-
-	BlogCategory.query = BlogCategory._query = function () {
-
-		return request({
-			modelName: BlogCategory.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/blog/categories',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
+	var Brand = {
+		name: 'Brand',
+		path: 'brands'
 	};
 
-	BlogCategory.list = BlogCategory._list = function () {
-
-		return request({
-			modelName: BlogCategory.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/blog/categories',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogCategory.count = BlogCategory._count = function () {
-
-		return request({
-			modelName: BlogCategory.name,
-			methodName: 'count',
-			httpMethod: 'GET',
-			path: '/v1/blog/categories/count',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogCategory.get = BlogCategory._get = function () {
-
-		return request({
-			modelName: BlogCategory.name,
-			methodName: 'get',
-			httpMethod: 'GET',
-			path: '/v1/blog/categories/{blogCategoryId}',
-			params: ['blogCategoryId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	return BlogCategory;
-};
-
-},{}],5:[function(require,module,exports){
-'use strict';
-
-module.exports = function (request) {
-
-	var BlogComment = { name: 'BlogComment' };
-
-	BlogComment.query = BlogComment._query = function () {
-
-		return request({
-			modelName: BlogComment.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/blog/posts/comments',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogComment.list = BlogComment._list = function () {
-
-		return request({
-			modelName: BlogComment.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/blog/posts/comments',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogComment.count = BlogComment._count = function () {
-
-		return request({
-			modelName: BlogComment.name,
-			methodName: 'count',
-			httpMethod: 'GET',
-			path: '/v1/blog/posts/comments/count',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogComment.get = BlogComment._get = function () {
-
-		return request({
-			modelName: BlogComment.name,
-			methodName: 'get',
-			httpMethod: 'GET',
-			path: '/v1/blog/posts/comments/{blogCommentId}',
-			params: ['blogCommentId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogComment.queryByPost = BlogComment._queryByPost = function () {
-
-		return request({
-			modelName: BlogComment.name,
-			methodName: 'queryByPost',
-			httpMethod: 'GET',
-			path: '/v1/blog/posts/{blogPostId}/comments',
-			params: ['blogPostId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogComment.listByPost = BlogComment._listByPost = function () {
-
-		return request({
-			modelName: BlogComment.name,
-			methodName: 'listByPost',
-			httpMethod: 'GET',
-			path: '/v1/blog/posts/{blogPostId}/comments',
-			params: ['blogPostId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogComment.queryByOwner = BlogComment._queryByOwner = function () {
-
-		return request({
-			modelName: BlogComment.name,
-			methodName: 'queryByOwner',
-			httpMethod: 'GET',
-			path: '/v1/{ownerModel}/{ownerId}/blog/posts/comments',
-			params: ['ownerModel', 'ownerId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogComment.listByOwner = BlogComment._listByOwner = function () {
-
-		return request({
-			modelName: BlogComment.name,
-			methodName: 'listByOwner',
-			httpMethod: 'GET',
-			path: '/v1/{ownerModel}/{ownerId}/blog/posts/comments',
-			params: ['ownerModel', 'ownerId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogComment.createAsMe = BlogComment._createAsMe = function () {
-
-		return request({
-			modelName: BlogComment.name,
-			methodName: 'createAsMe',
-			httpMethod: 'POST',
-			path: '/v1/me/blog/posts/comments',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogComment.updateAsMe = BlogComment._updateAsMe = function () {
-
-		return request({
-			modelName: BlogComment.name,
-			methodName: 'updateAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/blog/posts/comments/{blogCommentId}',
-			params: ['blogCommentId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogComment.flagAsMe = BlogComment._flagAsMe = function () {
-
-		return request({
-			modelName: BlogComment.name,
-			methodName: 'flagAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/blog/posts/comments/{blogCommentId}/flag',
-			params: ['blogCommentId'],
-			withoutPayload: true,
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogComment.cancelFlagAsMe = BlogComment._cancelFlagAsMe = function () {
-
-		return request({
-			modelName: BlogComment.name,
-			methodName: 'cancelFlagAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/blog/posts/comments/{blogCommentId}/flag/cancel',
-			params: ['blogCommentId'],
-			withoutPayload: true,
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogComment.deleteAsMe = BlogComment._deleteAsMe = function () {
-
-		return request({
-			modelName: BlogComment.name,
-			methodName: 'deleteAsMe',
-			httpMethod: 'DELETE',
-			path: '/v1/me/blog/posts/comments/{blogCommentId}',
-			params: ['blogCommentId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	return BlogComment;
-};
-
-},{}],6:[function(require,module,exports){
-'use strict';
-
-module.exports = function (request) {
-
-	var BlogPost = { name: 'BlogPost' };
-
-	BlogPost.query = BlogPost._query = function () {
-
-		return request({
-			modelName: BlogPost.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/blog/posts',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogPost.list = BlogPost._list = function () {
-
-		return request({
-			modelName: BlogPost.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/blog/posts',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogPost.count = BlogPost._count = function () {
-
-		return request({
-			modelName: BlogPost.name,
-			methodName: 'count',
-			httpMethod: 'GET',
-			path: '/v1/blog/posts/count',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogPost.get = BlogPost._get = function () {
-
-		return request({
-			modelName: BlogPost.name,
-			methodName: 'get',
-			httpMethod: 'GET',
-			path: '/v1/blog/posts/{blogPostId}',
-			params: ['blogPostId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogPost.queryByCategory = BlogPost._queryByCategory = function () {
-
-		return request({
-			modelName: BlogPost.name,
-			methodName: 'queryByCategory',
-			httpMethod: 'GET',
-			path: '/v1/blog/categories/{blogCategoryId}/posts',
-			params: ['blogCategoryId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogPost.listByCategory = BlogPost._listByCategory = function () {
-
-		return request({
-			modelName: BlogPost.name,
-			methodName: 'listByCategory',
-			httpMethod: 'GET',
-			path: '/v1/blog/categories/{blogCategoryId}/posts',
-			params: ['blogCategoryId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogPost.queryByCollaborator = BlogPost._queryByCollaborator = function () {
-
-		return request({
-			modelName: BlogPost.name,
-			methodName: 'queryByCollaborator',
-			httpMethod: 'GET',
-			path: '/v1/collaborators/{collaboratorId}/blog/posts',
-			params: ['collaboratorId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	BlogPost.listByCollaborator = BlogPost._listByCollaborator = function () {
-
-		return request({
-			modelName: BlogPost.name,
-			methodName: 'listByCollaborator',
-			httpMethod: 'GET',
-			path: '/v1/collaborators/{collaboratorId}/blog/posts',
-			params: ['collaboratorId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	return BlogPost;
-};
-
-},{}],7:[function(require,module,exports){
-'use strict';
-
-module.exports = function (request) {
-
-	var Brand = { name: 'Brand' };
-
-	Brand.query = Brand._query = function () {
+	Brand.query = function () {
 
 		return request({
 			modelName: Brand.name,
@@ -625,7 +206,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Brand.list = Brand._list = function () {
+	Brand.list = function () {
 
 		return request({
 			modelName: Brand.name,
@@ -637,7 +218,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Brand.count = Brand._count = function () {
+	Brand.count = function () {
 
 		return request({
 			modelName: Brand.name,
@@ -649,7 +230,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Brand.get = Brand._get = function () {
+	Brand.get = function () {
 
 		return request({
 			modelName: Brand.name,
@@ -664,14 +245,138 @@ module.exports = function (request) {
 	return Brand;
 };
 
-},{}],8:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var Collection = { name: 'Collection' };
+	var Cart = {
+		name: 'Cart',
+		path: ''
+	};
 
-	Collection.query = Collection._query = function () {
+	Cart.countItemsAsMe = function () {
+
+		return request({
+			modelName: Cart.name,
+			methodName: 'countItemsAsMe',
+			httpMethod: 'GET',
+			path: '/v1/me/cart/items/count',
+			params: [],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Cart.getAsNonRegistered = function () {
+
+		return request({
+			modelName: Cart.name,
+			methodName: 'getAsNonRegistered',
+			httpMethod: 'POST',
+			path: '/v1/cart',
+			params: [],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Cart.checkoutAsNonRegistered = function () {
+
+		return request({
+			modelName: Cart.name,
+			methodName: 'checkoutAsNonRegistered',
+			httpMethod: 'POST',
+			path: '/v1/cart/checkout',
+			params: [],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Cart.getAsMe = function () {
+
+		return request({
+			modelName: Cart.name,
+			methodName: 'getAsMe',
+			httpMethod: 'POST',
+			path: '/v1/me/cart',
+			params: [],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Cart.checkoutAsMe = function () {
+
+		return request({
+			modelName: Cart.name,
+			methodName: 'checkoutAsMe',
+			httpMethod: 'POST',
+			path: '/v1/me/cart/checkout',
+			params: [],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Cart.addItemAsMe = function () {
+
+		return request({
+			modelName: Cart.name,
+			methodName: 'addItemAsMe',
+			httpMethod: 'POST',
+			path: '/v1/me/cart/items',
+			params: [],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Cart.updateItemAsMe = function () {
+
+		return request({
+			modelName: Cart.name,
+			methodName: 'updateItemAsMe',
+			httpMethod: 'PUT',
+			path: '/v1/me/cart/items/{itemId}',
+			params: ['itemId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Cart.emptyAsMe = function () {
+
+		return request({
+			modelName: Cart.name,
+			methodName: 'emptyAsMe',
+			httpMethod: 'DELETE',
+			path: '/v1/me/cart/items',
+			params: [],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Cart.deleteItemAsMe = function () {
+
+		return request({
+			modelName: Cart.name,
+			methodName: 'deleteItemAsMe',
+			httpMethod: 'DELETE',
+			path: '/v1/me/cart/items/{itemId}',
+			params: ['itemId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	return Cart;
+};
+
+},{}],6:[function(require,module,exports){
+'use strict';
+
+module.exports = function (request) {
+
+	var Collection = {
+		name: 'Collection',
+		path: 'collections'
+	};
+
+	Collection.query = function () {
 
 		return request({
 			modelName: Collection.name,
@@ -683,7 +388,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Collection.list = Collection._list = function () {
+	Collection.list = function () {
 
 		return request({
 			modelName: Collection.name,
@@ -695,7 +400,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Collection.count = Collection._count = function () {
+	Collection.count = function () {
 
 		return request({
 			modelName: Collection.name,
@@ -707,7 +412,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Collection.get = Collection._get = function () {
+	Collection.get = function () {
 
 		return request({
 			modelName: Collection.name,
@@ -719,7 +424,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Collection.queryByParent = Collection._queryByParent = function () {
+	Collection.queryByParent = function () {
 
 		return request({
 			modelName: Collection.name,
@@ -731,7 +436,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Collection.listByParent = Collection._listByParent = function () {
+	Collection.listByParent = function () {
 
 		return request({
 			modelName: Collection.name,
@@ -746,14 +451,17 @@ module.exports = function (request) {
 	return Collection;
 };
 
-},{}],9:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var Country = { name: 'Country' };
+	var Country = {
+		name: 'Country',
+		path: 'countries'
+	};
 
-	Country.query = Country._query = function () {
+	Country.query = function () {
 
 		return request({
 			modelName: Country.name,
@@ -765,7 +473,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Country.list = Country._list = function () {
+	Country.list = function () {
 
 		return request({
 			modelName: Country.name,
@@ -777,7 +485,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Country.count = Country._count = function () {
+	Country.count = function () {
 
 		return request({
 			modelName: Country.name,
@@ -789,7 +497,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Country.get = Country._get = function () {
+	Country.get = function () {
 
 		return request({
 			modelName: Country.name,
@@ -804,14 +512,17 @@ module.exports = function (request) {
 	return Country;
 };
 
-},{}],10:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var Coupon = { name: 'Coupon' };
+	var Coupon = {
+		name: 'Coupon',
+		path: 'coupons'
+	};
 
-	Coupon.query = Coupon._query = function () {
+	Coupon.query = function () {
 
 		return request({
 			modelName: Coupon.name,
@@ -823,7 +534,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Coupon.list = Coupon._list = function () {
+	Coupon.list = function () {
 
 		return request({
 			modelName: Coupon.name,
@@ -835,7 +546,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Coupon.count = Coupon._count = function () {
+	Coupon.count = function () {
 
 		return request({
 			modelName: Coupon.name,
@@ -847,7 +558,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Coupon.get = Coupon._get = function () {
+	Coupon.get = function () {
 
 		return request({
 			modelName: Coupon.name,
@@ -862,14 +573,17 @@ module.exports = function (request) {
 	return Coupon;
 };
 
-},{}],11:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var Currency = { name: 'Currency' };
+	var Currency = {
+		name: 'Currency',
+		path: 'currencies'
+	};
 
-	Currency.query = Currency._query = function () {
+	Currency.query = function () {
 
 		return request({
 			modelName: Currency.name,
@@ -881,7 +595,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Currency.list = Currency._list = function () {
+	Currency.list = function () {
 
 		return request({
 			modelName: Currency.name,
@@ -893,7 +607,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Currency.count = Currency._count = function () {
+	Currency.count = function () {
 
 		return request({
 			modelName: Currency.name,
@@ -905,7 +619,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Currency.get = Currency._get = function () {
+	Currency.get = function () {
 
 		return request({
 			modelName: Currency.name,
@@ -920,14 +634,17 @@ module.exports = function (request) {
 	return Currency;
 };
 
-},{}],12:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var Customer = { name: 'Customer' };
+	var Customer = {
+		name: 'Customer',
+		path: 'customers'
+	};
 
-	Customer.getMe = Customer._getMe = function () {
+	Customer.getMe = function () {
 
 		return request({
 			modelName: Customer.name,
@@ -939,19 +656,43 @@ module.exports = function (request) {
 		});
 	};
 
-	Customer.countItemsAsMe = Customer._countItemsAsMe = function () {
+	Customer.queryCouponsAsMe = function () {
 
 		return request({
 			modelName: Customer.name,
-			methodName: 'countItemsAsMe',
+			methodName: 'queryCouponsAsMe',
 			httpMethod: 'GET',
-			path: '/v1/me/cart/items/count',
+			path: '/v1/me/coupons',
 			params: [],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	Customer.signup = Customer._signup = function () {
+	Customer.listCouponsAsMe = function () {
+
+		return request({
+			modelName: Customer.name,
+			methodName: 'listCouponsAsMe',
+			httpMethod: 'GET',
+			path: '/v1/me/coupons',
+			params: [],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Customer.countCouponsAsMe = function () {
+
+		return request({
+			modelName: Customer.name,
+			methodName: 'countCouponsAsMe',
+			httpMethod: 'GET',
+			path: '/v1/me/coupons/count',
+			params: [],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Customer.signup = function () {
 
 		return request({
 			modelName: Customer.name,
@@ -963,7 +704,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Customer.auth = Customer._auth = function () {
+	Customer.auth = function () {
 
 		return request({
 			modelName: Customer.name,
@@ -975,20 +716,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Customer.signout = Customer._signout = function () {
-
-		return request({
-			modelName: Customer.name,
-			methodName: 'signout',
-			httpMethod: 'POST',
-			path: '/v1/me/signout',
-			params: [],
-			withoutPayload: true,
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	Customer.requestVerificationEmail = Customer._requestVerificationEmail = function () {
+	Customer.requestVerificationEmail = function () {
 
 		return request({
 			modelName: Customer.name,
@@ -1000,7 +728,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Customer.verify = Customer._verify = function () {
+	Customer.verify = function () {
 
 		return request({
 			modelName: Customer.name,
@@ -1012,19 +740,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Customer.addItemAsMe = Customer._addItemAsMe = function () {
-
-		return request({
-			modelName: Customer.name,
-			methodName: 'addItemAsMe',
-			httpMethod: 'POST',
-			path: '/v1/me/cart/items',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	Customer.resetPassword = Customer._resetPassword = function () {
+	Customer.resetPassword = function () {
 
 		return request({
 			modelName: Customer.name,
@@ -1036,19 +752,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Customer.getCartByNonRegistered = Customer._getCartByNonRegistered = function () {
-
-		return request({
-			modelName: Customer.name,
-			methodName: 'getCartByNonRegistered',
-			httpMethod: 'PUT',
-			path: '/v1/cart',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	Customer.updateMe = Customer._updateMe = function () {
+	Customer.updateMe = function () {
 
 		return request({
 			modelName: Customer.name,
@@ -1060,31 +764,19 @@ module.exports = function (request) {
 		});
 	};
 
-	Customer.getCartAsMe = Customer._getCartAsMe = function () {
+	Customer.updateCredentialsAsMe = function () {
 
 		return request({
 			modelName: Customer.name,
-			methodName: 'getCartAsMe',
+			methodName: 'updateCredentialsAsMe',
 			httpMethod: 'PUT',
-			path: '/v1/me/cart',
+			path: '/v1/me/credentials',
 			params: [],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	Customer.updateItemAsMe = Customer._updateItemAsMe = function () {
-
-		return request({
-			modelName: Customer.name,
-			methodName: 'updateItemAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/cart/items/{itemId}',
-			params: ['itemId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	Customer.deleteMe = Customer._deleteMe = function () {
+	Customer.deleteMe = function () {
 
 		return request({
 			modelName: Customer.name,
@@ -1096,7 +788,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Customer.deleteCouponAsMe = Customer._deleteCouponAsMe = function () {
+	Customer.deleteCouponAsMe = function () {
 
 		return request({
 			modelName: Customer.name,
@@ -1108,87 +800,20 @@ module.exports = function (request) {
 		});
 	};
 
-	Customer.deleteItemAsMe = Customer._deleteItemAsMe = function () {
-
-		return request({
-			modelName: Customer.name,
-			methodName: 'deleteItemAsMe',
-			httpMethod: 'DELETE',
-			path: '/v1/me/cart/items/{itemId}',
-			params: ['itemId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
 	return Customer;
 };
 
-},{}],13:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var Departure = { name: 'Departure' };
-
-	Departure.query = Departure._query = function () {
-
-		return request({
-			modelName: Departure.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/departures',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
+	var Group = {
+		name: 'Group',
+		path: 'groups'
 	};
 
-	Departure.list = Departure._list = function () {
-
-		return request({
-			modelName: Departure.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/departures',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	Departure.count = Departure._count = function () {
-
-		return request({
-			modelName: Departure.name,
-			methodName: 'count',
-			httpMethod: 'GET',
-			path: '/v1/departures/count',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	Departure.get = Departure._get = function () {
-
-		return request({
-			modelName: Departure.name,
-			methodName: 'get',
-			httpMethod: 'GET',
-			path: '/v1/departures/{departureId}',
-			params: ['departureId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	return Departure;
-};
-
-},{}],14:[function(require,module,exports){
-'use strict';
-
-module.exports = function (request) {
-
-	var Group = { name: 'Group' };
-
-	Group.query = Group._query = function () {
+	Group.query = function () {
 
 		return request({
 			modelName: Group.name,
@@ -1200,7 +825,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Group.list = Group._list = function () {
+	Group.list = function () {
 
 		return request({
 			modelName: Group.name,
@@ -1212,7 +837,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Group.count = Group._count = function () {
+	Group.count = function () {
 
 		return request({
 			modelName: Group.name,
@@ -1224,7 +849,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Group.get = Group._get = function () {
+	Group.get = function () {
 
 		return request({
 			modelName: Group.name,
@@ -1239,14 +864,17 @@ module.exports = function (request) {
 	return Group;
 };
 
-},{}],15:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var Image = { name: 'Image' };
+	var Image = {
+		name: 'Image',
+		path: 'images'
+	};
 
-	Image.addToReviewAsMe = Image._addToReviewAsMe = function () {
+	Image.addToReviewAsMe = function () {
 
 		return request({
 			modelName: Image.name,
@@ -1254,11 +882,12 @@ module.exports = function (request) {
 			httpMethod: 'POST',
 			path: '/v1/me/products/reviews/{reviewId}/images',
 			params: ['reviewId'],
+			usesFormData: true,
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	Image.deleteFromReviewAsMe = Image._deleteFromReviewAsMe = function () {
+	Image.deleteFromReviewAsMe = function () {
 
 		return request({
 			modelName: Image.name,
@@ -1273,228 +902,584 @@ module.exports = function (request) {
 	return Image;
 };
 
-},{}],16:[function(require,module,exports){
-'use strict';
-
-module.exports = function (request) {
-
-	var ImageBundle = { name: 'ImageBundle' };
-
-	ImageBundle.query = ImageBundle._query = function () {
-
-		return request({
-			modelName: ImageBundle.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/images/bundles',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ImageBundle.list = ImageBundle._list = function () {
-
-		return request({
-			modelName: ImageBundle.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/images/bundles',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ImageBundle.count = ImageBundle._count = function () {
-
-		return request({
-			modelName: ImageBundle.name,
-			methodName: 'count',
-			httpMethod: 'GET',
-			path: '/v1/images/bundles/count',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ImageBundle.get = ImageBundle._get = function () {
-
-		return request({
-			modelName: ImageBundle.name,
-			methodName: 'get',
-			httpMethod: 'GET',
-			path: '/v1/images/bundles/{imageBundleId}',
-			params: ['imageBundleId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	return ImageBundle;
-};
-
-},{}],17:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 	return {
 
-		BlogCategory: require('./blogCategory.js')(request),
-		BlogComment: require('./blogComment.js')(request),
-		BlogPost: require('./blogPost.js')(request),
 		Brand: require('./brand.js')(request),
+		Cart: require('./cart.js')(request),
 		Collection: require('./collection.js')(request),
 		Country: require('./country.js')(request),
 		Coupon: require('./coupon.js')(request),
 		Currency: require('./currency.js')(request),
 		Customer: require('./customer.js')(request),
-		Departure: require('./departure.js')(request),
 		Group: require('./group.js')(request),
 		Image: require('./image.js')(request),
-		ImageBundle: require('./imageBundle.js')(request),
-		Metafield: require('./metafield.js')(request),
+		Order: require('./order.js')(request),
 		OrderTag: require('./orderTag.js')(request),
+		PaymentMethod: require('./paymentMethod.js')(request),
 		Product: require('./product.js')(request),
-		ProductAnswer: require('./productAnswer.js')(request),
-		ProductQuestion: require('./productQuestion.js')(request),
 		Review: require('./review.js')(request),
 		ReviewComment: require('./reviewComment.js')(request),
-		Shipping: require('./shipping.js')(request),
 		ShippingMethod: require('./shippingMethod.js')(request),
-		SupportCategory: require('./supportCategory.js')(request),
-		SupportComment: require('./supportComment.js')(request),
-		SupportPost: require('./supportPost.js')(request),
-		Tax: require('./tax.js')(request),
+		Store: require('./store.js')(request),
+		Subscription: require('./subscription.js')(request),
 		TaxCategory: require('./taxCategory.js')(request),
+		Warehouse: require('./warehouse.js')(request),
 		WishList: require('./wishList.js')(request)
 
 	};
 };
 
-},{"./blogCategory.js":4,"./blogComment.js":5,"./blogPost.js":6,"./brand.js":7,"./collection.js":8,"./country.js":9,"./coupon.js":10,"./currency.js":11,"./customer.js":12,"./departure.js":13,"./group.js":14,"./image.js":15,"./imageBundle.js":16,"./metafield.js":18,"./orderTag.js":19,"./product.js":20,"./productAnswer.js":21,"./productQuestion.js":22,"./review.js":23,"./reviewComment.js":24,"./shipping.js":25,"./shippingMethod.js":26,"./supportCategory.js":27,"./supportComment.js":28,"./supportPost.js":29,"./tax.js":30,"./taxCategory.js":31,"./wishList.js":32}],18:[function(require,module,exports){
+},{"./brand.js":4,"./cart.js":5,"./collection.js":6,"./country.js":7,"./coupon.js":8,"./currency.js":9,"./customer.js":10,"./group.js":11,"./image.js":12,"./order.js":14,"./orderTag.js":15,"./paymentMethod.js":16,"./product.js":17,"./review.js":18,"./reviewComment.js":19,"./shippingMethod.js":20,"./store.js":21,"./subscription.js":22,"./taxCategory.js":23,"./warehouse.js":24,"./wishList.js":25}],14:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var Metafield = { name: 'Metafield' };
+	var Order = {
+		name: 'Order',
+		path: 'orders'
+	};
 
-	Metafield.queryModelMeta = Metafield._queryModelMeta = function () {
+	Order.query = function () {
 
 		return request({
-			modelName: Metafield.name,
-			methodName: 'queryModelMeta',
+			modelName: Order.name,
+			methodName: 'query',
 			httpMethod: 'GET',
-			path: '/v1/{model*1}/meta',
-			params: ['model'],
+			path: '/v1/orders',
+			params: [],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	Metafield.listModelMeta = Metafield._listModelMeta = function () {
+	Order.list = function () {
 
 		return request({
-			modelName: Metafield.name,
-			methodName: 'listModelMeta',
+			modelName: Order.name,
+			methodName: 'list',
 			httpMethod: 'GET',
-			path: '/v1/{model*1}/meta',
-			params: ['model'],
+			path: '/v1/orders',
+			params: [],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	Metafield.queryModelMeta = Metafield._queryModelMeta = function () {
+	Order.count = function () {
 
 		return request({
-			modelName: Metafield.name,
-			methodName: 'queryModelMeta',
+			modelName: Order.name,
+			methodName: 'count',
 			httpMethod: 'GET',
-			path: '/v1/{model*2}/meta',
-			params: ['model', 'model'],
+			path: '/v1/orders/count',
+			params: [],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	Metafield.listModelMeta = Metafield._listModelMeta = function () {
+	Order.get = function () {
 
 		return request({
-			modelName: Metafield.name,
-			methodName: 'listModelMeta',
+			modelName: Order.name,
+			methodName: 'get',
 			httpMethod: 'GET',
-			path: '/v1/{model*2}/meta',
-			params: ['model', 'model'],
+			path: '/v1/orders/{orderId}',
+			params: ['orderId'],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	Metafield.getModelMeta = Metafield._getModelMeta = function () {
+	Order.queryByCustomer = function () {
 
 		return request({
-			modelName: Metafield.name,
-			methodName: 'getModelMeta',
+			modelName: Order.name,
+			methodName: 'queryByCustomer',
 			httpMethod: 'GET',
-			path: '/v1/{model*1}/meta/{field}',
-			params: ['model', 'field'],
+			path: '/v1/customers/{customerId}/orders',
+			params: ['customerId'],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	Metafield.getModelMeta = Metafield._getModelMeta = function () {
+	Order.listByCustomer = function () {
 
 		return request({
-			modelName: Metafield.name,
-			methodName: 'getModelMeta',
+			modelName: Order.name,
+			methodName: 'listByCustomer',
 			httpMethod: 'GET',
-			path: '/v1/{model*2}/meta/{field}',
-			params: ['model', 'model', 'field'],
+			path: '/v1/customers/{customerId}/orders',
+			params: ['customerId'],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	Metafield.queryModelMeta = Metafield._queryModelMeta = function () {
+	Order.getTicketDetails = function () {
 
 		return request({
-			modelName: Metafield.name,
-			methodName: 'queryModelMeta',
+			modelName: Order.name,
+			methodName: 'getTicketDetails',
 			httpMethod: 'GET',
-			path: '/v1/{model*3}/meta',
-			params: ['model', 'model', 'model'],
+			path: '/v1/orders/tickets/{code}/details',
+			params: ['code'],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	Metafield.listModelMeta = Metafield._listModelMeta = function () {
+	Order.getSyncOperationErrors = function () {
 
 		return request({
-			modelName: Metafield.name,
-			methodName: 'listModelMeta',
+			modelName: Order.name,
+			methodName: 'getSyncOperationErrors',
 			httpMethod: 'GET',
-			path: '/v1/{model*3}/meta',
-			params: ['model', 'model', 'model'],
+			path: '/v1/orders/{orderId}/sync/operations/errors',
+			params: ['orderId'],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	Metafield.getModelMeta = Metafield._getModelMeta = function () {
+	Order.createFulfillment = function () {
 
 		return request({
-			modelName: Metafield.name,
-			methodName: 'getModelMeta',
-			httpMethod: 'GET',
-			path: '/v1/{model*3}/meta/{field}',
-			params: ['model', 'model', 'model', 'field'],
+			modelName: Order.name,
+			methodName: 'createFulfillment',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/fulfillments',
+			params: ['orderId'],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	return Metafield;
+	Order.recover = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'recover',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/recover',
+			params: ['orderId'],
+			withoutPayload: true,
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.cancel = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'cancel',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/cancel',
+			params: ['orderId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.reject = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'reject',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/reject',
+			params: ['orderId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.undone = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'undone',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/undone',
+			params: ['orderId'],
+			withoutPayload: true,
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.done = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'done',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/done',
+			params: ['orderId'],
+			withoutPayload: true,
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.verifyTicket = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'verifyTicket',
+			httpMethod: 'POST',
+			path: '/v1/orders/tickets/{code}/verify',
+			params: ['code'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.useTicket = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'useTicket',
+			httpMethod: 'POST',
+			path: '/v1/orders/tickets/{code}/use',
+			params: ['code'],
+			withoutPayload: true,
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.recoverTicket = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'recoverTicket',
+			httpMethod: 'POST',
+			path: '/v1/orders/tickets/{code}/recover',
+			params: ['code'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.createFullPaymentTransaction = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'createFullPaymentTransaction',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/transactions/full',
+			params: ['orderId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.createAllFulfillments = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'createAllFulfillments',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/fulfillments/all',
+			params: ['orderId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.createFullRefund = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'createFullRefund',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/refunds/full',
+			params: ['orderId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.createPartialPaymentTransaction = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'createPartialPaymentTransaction',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/transactions/partial',
+			params: ['orderId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.createPartialRefund = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'createPartialRefund',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/refunds/partial',
+			params: ['orderId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.rejectRefund = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'rejectRefund',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/refunds/{refundId}/reject',
+			params: ['orderId', 'refundId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.syncPaymentTransaction = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'syncPaymentTransaction',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/transactions/{transactionId}/sync',
+			params: ['orderId', 'transactionId'],
+			withoutPayload: true,
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.recoverDownload = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'recoverDownload',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/items/{itemId}/download/recover',
+			params: ['orderId', 'itemId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.partialRestock = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'partialRestock',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/refunds/{refundId}/restock/partial',
+			params: ['orderId', 'refundId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.createFullRefundTransaction = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'createFullRefundTransaction',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/refunds/{refundId}/transactions/full',
+			params: ['orderId', 'refundId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.fullRestock = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'fullRestock',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/refunds/{refundId}/restock/full',
+			params: ['orderId', 'refundId'],
+			withoutPayload: true,
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.createDownloadableUrl = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'createDownloadableUrl',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/items/{itemId}/download/url',
+			params: ['orderId', 'itemId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.createPartialRefundTransaction = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'createPartialRefundTransaction',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/refunds/{refundId}/transactions/partial',
+			params: ['orderId', 'refundId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.syncRefundTransaction = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'syncRefundTransaction',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/refunds/{refundId}/transactions/{transactionId}/sync',
+			params: ['orderId', 'refundId', 'transactionId'],
+			withoutPayload: true,
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.update = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'update',
+			httpMethod: 'PUT',
+			path: '/v1/orders/{orderId}',
+			params: ['orderId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.updateFulfillment = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'updateFulfillment',
+			httpMethod: 'PUT',
+			path: '/v1/orders/{orderId}/fulfillments/{fulfillmentId}',
+			params: ['orderId', 'fulfillmentId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.updateItem = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'updateItem',
+			httpMethod: 'PUT',
+			path: '/v1/orders/{orderId}/items/{itemId}',
+			params: ['orderId', 'itemId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.updatePaymentTransaction = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'updatePaymentTransaction',
+			httpMethod: 'PUT',
+			path: '/v1/orders/{orderId}/transactions/{transactionId}',
+			params: ['orderId', 'transactionId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.updateRefund = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'updateRefund',
+			httpMethod: 'PUT',
+			path: '/v1/orders/{orderId}/refunds/{refundId}',
+			params: ['orderId', 'refundId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.updateRefundTransaction = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'updateRefundTransaction',
+			httpMethod: 'PUT',
+			path: '/v1/orders/{orderId}/refunds/{refundId}/transactions/{transactionId}',
+			params: ['orderId', 'refundId', 'transactionId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.delete = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'delete',
+			httpMethod: 'DELETE',
+			path: '/v1/orders/{orderId}',
+			params: ['orderId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.deletePaymentTransaction = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'deletePaymentTransaction',
+			httpMethod: 'DELETE',
+			path: '/v1/orders/{orderId}/transactions/{transactionId}',
+			params: ['orderId', 'transactionId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.deleteRefund = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'deleteRefund',
+			httpMethod: 'DELETE',
+			path: '/v1/orders/{orderId}/refunds/{refundId}',
+			params: ['orderId', 'refundId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.deleteFulfillment = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'deleteFulfillment',
+			httpMethod: 'DELETE',
+			path: '/v1/orders/{orderId}/fulfillments/{fulfillmentId}',
+			params: ['orderId', 'fulfillmentId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.deleteSyncOperation = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'deleteSyncOperation',
+			httpMethod: 'DELETE',
+			path: '/v1/orders/{orderId}/sync/operations/{operationId}',
+			params: ['orderId', 'operationId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Order.deleteRefundTransaction = function () {
+
+		return request({
+			modelName: Order.name,
+			methodName: 'deleteRefundTransaction',
+			httpMethod: 'DELETE',
+			path: '/v1/orders/{orderId}/refunds/{refundId}/transactions/{transactionId}',
+			params: ['orderId', 'refundId', 'transactionId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	return Order;
 };
 
-},{}],19:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var OrderTag = { name: 'OrderTag' };
+	var OrderTag = {
+		name: 'OrderTag',
+		path: 'orders/tags'
+	};
 
-	OrderTag.query = OrderTag._query = function () {
+	OrderTag.query = function () {
 
 		return request({
 			modelName: OrderTag.name,
@@ -1506,7 +1491,7 @@ module.exports = function (request) {
 		});
 	};
 
-	OrderTag.list = OrderTag._list = function () {
+	OrderTag.list = function () {
 
 		return request({
 			modelName: OrderTag.name,
@@ -1518,7 +1503,7 @@ module.exports = function (request) {
 		});
 	};
 
-	OrderTag.count = OrderTag._count = function () {
+	OrderTag.count = function () {
 
 		return request({
 			modelName: OrderTag.name,
@@ -1530,7 +1515,7 @@ module.exports = function (request) {
 		});
 	};
 
-	OrderTag.get = OrderTag._get = function () {
+	OrderTag.get = function () {
 
 		return request({
 			modelName: OrderTag.name,
@@ -1545,14 +1530,78 @@ module.exports = function (request) {
 	return OrderTag;
 };
 
-},{}],20:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var Product = { name: 'Product' };
+	var PaymentMethod = {
+		name: 'PaymentMethod',
+		path: 'payments/methods'
+	};
 
-	Product.query = Product._query = function () {
+	PaymentMethod.query = function () {
+
+		return request({
+			modelName: PaymentMethod.name,
+			methodName: 'query',
+			httpMethod: 'GET',
+			path: '/v1/payments/methods',
+			params: [],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	PaymentMethod.list = function () {
+
+		return request({
+			modelName: PaymentMethod.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/payments/methods',
+			params: [],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	PaymentMethod.count = function () {
+
+		return request({
+			modelName: PaymentMethod.name,
+			methodName: 'count',
+			httpMethod: 'GET',
+			path: '/v1/payments/methods/count',
+			params: [],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	PaymentMethod.get = function () {
+
+		return request({
+			modelName: PaymentMethod.name,
+			methodName: 'get',
+			httpMethod: 'GET',
+			path: '/v1/payments/methods/{paymentMethodId}',
+			params: ['paymentMethodId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	return PaymentMethod;
+};
+
+},{}],17:[function(require,module,exports){
+'use strict';
+
+module.exports = function (request) {
+
+	var Product = {
+		name: 'Product',
+		path: 'products'
+	};
+
+	Product.query = function () {
 
 		return request({
 			modelName: Product.name,
@@ -1564,7 +1613,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Product.list = Product._list = function () {
+	Product.list = function () {
 
 		return request({
 			modelName: Product.name,
@@ -1576,7 +1625,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Product.count = Product._count = function () {
+	Product.count = function () {
 
 		return request({
 			modelName: Product.name,
@@ -1588,7 +1637,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Product.get = Product._get = function () {
+	Product.get = function () {
 
 		return request({
 			modelName: Product.name,
@@ -1600,7 +1649,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Product.queryByBrand = Product._queryByBrand = function () {
+	Product.queryByBrand = function () {
 
 		return request({
 			modelName: Product.name,
@@ -1612,7 +1661,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Product.listByBrand = Product._listByBrand = function () {
+	Product.listByBrand = function () {
 
 		return request({
 			modelName: Product.name,
@@ -1624,7 +1673,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Product.queryByCollection = Product._queryByCollection = function () {
+	Product.queryByCollection = function () {
 
 		return request({
 			modelName: Product.name,
@@ -1636,7 +1685,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Product.listByCollection = Product._listByCollection = function () {
+	Product.listByCollection = function () {
 
 		return request({
 			modelName: Product.name,
@@ -1651,402 +1700,17 @@ module.exports = function (request) {
 	return Product;
 };
 
-},{}],21:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var ProductAnswer = { name: 'ProductAnswer' };
-
-	ProductAnswer.query = ProductAnswer._query = function () {
-
-		return request({
-			modelName: ProductAnswer.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/products/questions/answers',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
+	var Review = {
+		name: 'Review',
+		path: 'products/reviews'
 	};
 
-	ProductAnswer.list = ProductAnswer._list = function () {
-
-		return request({
-			modelName: ProductAnswer.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/products/questions/answers',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductAnswer.count = ProductAnswer._count = function () {
-
-		return request({
-			modelName: ProductAnswer.name,
-			methodName: 'count',
-			httpMethod: 'GET',
-			path: '/v1/products/questions/answers/count',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductAnswer.get = ProductAnswer._get = function () {
-
-		return request({
-			modelName: ProductAnswer.name,
-			methodName: 'get',
-			httpMethod: 'GET',
-			path: '/v1/products/questions/answers/{productAnswerId}',
-			params: ['productAnswerId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductAnswer.queryByQuestion = ProductAnswer._queryByQuestion = function () {
-
-		return request({
-			modelName: ProductAnswer.name,
-			methodName: 'queryByQuestion',
-			httpMethod: 'GET',
-			path: '/v1/products/questions/{productQuestionId}/answers',
-			params: ['productQuestionId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductAnswer.listByQuestion = ProductAnswer._listByQuestion = function () {
-
-		return request({
-			modelName: ProductAnswer.name,
-			methodName: 'listByQuestion',
-			httpMethod: 'GET',
-			path: '/v1/products/questions/{productQuestionId}/answers',
-			params: ['productQuestionId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductAnswer.queryByOwner = ProductAnswer._queryByOwner = function () {
-
-		return request({
-			modelName: ProductAnswer.name,
-			methodName: 'queryByOwner',
-			httpMethod: 'GET',
-			path: '/v1/{ownerModel}/{ownerId}/products/questions/answers',
-			params: ['ownerModel', 'ownerId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductAnswer.listByOwner = ProductAnswer._listByOwner = function () {
-
-		return request({
-			modelName: ProductAnswer.name,
-			methodName: 'listByOwner',
-			httpMethod: 'GET',
-			path: '/v1/{ownerModel}/{ownerId}/products/questions/answers',
-			params: ['ownerModel', 'ownerId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductAnswer.createAsMe = ProductAnswer._createAsMe = function () {
-
-		return request({
-			modelName: ProductAnswer.name,
-			methodName: 'createAsMe',
-			httpMethod: 'POST',
-			path: '/v1/me/products/questions/answers',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductAnswer.updateAsMe = ProductAnswer._updateAsMe = function () {
-
-		return request({
-			modelName: ProductAnswer.name,
-			methodName: 'updateAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/products/questions/answers/{productAnswerId}',
-			params: ['productAnswerId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductAnswer.flagAsMe = ProductAnswer._flagAsMe = function () {
-
-		return request({
-			modelName: ProductAnswer.name,
-			methodName: 'flagAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/products/questions/answers/{productAnswerId}/flag',
-			params: ['productAnswerId'],
-			withoutPayload: true,
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductAnswer.helpedAsMe = ProductAnswer._helpedAsMe = function () {
-
-		return request({
-			modelName: ProductAnswer.name,
-			methodName: 'helpedAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/products/questions/answers/{productAnswerId}/helped/{upDown}',
-			params: ['productAnswerId', 'upDown'],
-			withoutPayload: true,
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductAnswer.cancelFlagAsMe = ProductAnswer._cancelFlagAsMe = function () {
-
-		return request({
-			modelName: ProductAnswer.name,
-			methodName: 'cancelFlagAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/products/questions/answers/{productAnswerId}/flag/cancel',
-			params: ['productAnswerId'],
-			withoutPayload: true,
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductAnswer.cancelHelpedAsMe = ProductAnswer._cancelHelpedAsMe = function () {
-
-		return request({
-			modelName: ProductAnswer.name,
-			methodName: 'cancelHelpedAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/products/questions/answers/{productAnswerId}/helped/{upDown}/cancel',
-			params: ['productAnswerId', 'upDown'],
-			withoutPayload: true,
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductAnswer.deleteAsMe = ProductAnswer._deleteAsMe = function () {
-
-		return request({
-			modelName: ProductAnswer.name,
-			methodName: 'deleteAsMe',
-			httpMethod: 'DELETE',
-			path: '/v1/me/products/questions/answers/{productAnswerId}',
-			params: ['productAnswerId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	return ProductAnswer;
-};
-
-},{}],22:[function(require,module,exports){
-'use strict';
-
-module.exports = function (request) {
-
-	var ProductQuestion = { name: 'ProductQuestion' };
-
-	ProductQuestion.query = ProductQuestion._query = function () {
-
-		return request({
-			modelName: ProductQuestion.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/products/questions',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductQuestion.list = ProductQuestion._list = function () {
-
-		return request({
-			modelName: ProductQuestion.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/products/questions',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductQuestion.count = ProductQuestion._count = function () {
-
-		return request({
-			modelName: ProductQuestion.name,
-			methodName: 'count',
-			httpMethod: 'GET',
-			path: '/v1/products/questions/count',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductQuestion.get = ProductQuestion._get = function () {
-
-		return request({
-			modelName: ProductQuestion.name,
-			methodName: 'get',
-			httpMethod: 'GET',
-			path: '/v1/products/questions/{productQuestionId}',
-			params: ['productQuestionId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductQuestion.queryByProduct = ProductQuestion._queryByProduct = function () {
-
-		return request({
-			modelName: ProductQuestion.name,
-			methodName: 'queryByProduct',
-			httpMethod: 'GET',
-			path: '/v1/products/{productId}/questions',
-			params: ['productId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductQuestion.listByProduct = ProductQuestion._listByProduct = function () {
-
-		return request({
-			modelName: ProductQuestion.name,
-			methodName: 'listByProduct',
-			httpMethod: 'GET',
-			path: '/v1/products/{productId}/questions',
-			params: ['productId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductQuestion.queryByCustomer = ProductQuestion._queryByCustomer = function () {
-
-		return request({
-			modelName: ProductQuestion.name,
-			methodName: 'queryByCustomer',
-			httpMethod: 'GET',
-			path: '/v1/customers/{customerId}/products/questions',
-			params: ['customerId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductQuestion.listByCustomer = ProductQuestion._listByCustomer = function () {
-
-		return request({
-			modelName: ProductQuestion.name,
-			methodName: 'listByCustomer',
-			httpMethod: 'GET',
-			path: '/v1/customers/{customerId}/products/questions',
-			params: ['customerId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductQuestion.createAsMe = ProductQuestion._createAsMe = function () {
-
-		return request({
-			modelName: ProductQuestion.name,
-			methodName: 'createAsMe',
-			httpMethod: 'POST',
-			path: '/v1/me/products/questions',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductQuestion.updateAsMe = ProductQuestion._updateAsMe = function () {
-
-		return request({
-			modelName: ProductQuestion.name,
-			methodName: 'updateAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/products/questions/{productQuestionId}',
-			params: ['productQuestionId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductQuestion.flagAsMe = ProductQuestion._flagAsMe = function () {
-
-		return request({
-			modelName: ProductQuestion.name,
-			methodName: 'flagAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/products/questions/{productQuestionId}/flag',
-			params: ['productQuestionId'],
-			withoutPayload: true,
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductQuestion.cancelFlagAsMe = ProductQuestion._cancelFlagAsMe = function () {
-
-		return request({
-			modelName: ProductQuestion.name,
-			methodName: 'cancelFlagAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/products/questions/{productQuestionId}/flag/cancel',
-			params: ['productQuestionId'],
-			withoutPayload: true,
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductQuestion.helpedAsMe = ProductQuestion._helpedAsMe = function () {
-
-		return request({
-			modelName: ProductQuestion.name,
-			methodName: 'helpedAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/products/questions/{productQuestionId}/helped/{upDown}',
-			params: ['productQuestionId', 'upDown'],
-			withoutPayload: true,
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductQuestion.cancelHelpedAsMe = ProductQuestion._cancelHelpedAsMe = function () {
-
-		return request({
-			modelName: ProductQuestion.name,
-			methodName: 'cancelHelpedAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/products/questions/{productQuestionId}/helped/{upDown}/cancel',
-			params: ['productQuestionId', 'upDown'],
-			withoutPayload: true,
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ProductQuestion.deleteAsMe = ProductQuestion._deleteAsMe = function () {
-
-		return request({
-			modelName: ProductQuestion.name,
-			methodName: 'deleteAsMe',
-			httpMethod: 'DELETE',
-			path: '/v1/me/products/questions/{productQuestionId}',
-			params: ['productQuestionId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	return ProductQuestion;
-};
-
-},{}],23:[function(require,module,exports){
-'use strict';
-
-module.exports = function (request) {
-
-	var Review = { name: 'Review' };
-
-	Review.query = Review._query = function () {
+	Review.query = function () {
 
 		return request({
 			modelName: Review.name,
@@ -2058,7 +1722,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Review.list = Review._list = function () {
+	Review.list = function () {
 
 		return request({
 			modelName: Review.name,
@@ -2070,7 +1734,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Review.count = Review._count = function () {
+	Review.count = function () {
 
 		return request({
 			modelName: Review.name,
@@ -2082,7 +1746,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Review.get = Review._get = function () {
+	Review.get = function () {
 
 		return request({
 			modelName: Review.name,
@@ -2094,7 +1758,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Review.queryByProduct = Review._queryByProduct = function () {
+	Review.queryByProduct = function () {
 
 		return request({
 			modelName: Review.name,
@@ -2106,7 +1770,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Review.listByProduct = Review._listByProduct = function () {
+	Review.listByProduct = function () {
 
 		return request({
 			modelName: Review.name,
@@ -2118,7 +1782,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Review.queryByCustomer = Review._queryByCustomer = function () {
+	Review.queryByCustomer = function () {
 
 		return request({
 			modelName: Review.name,
@@ -2130,7 +1794,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Review.listByCustomer = Review._listByCustomer = function () {
+	Review.listByCustomer = function () {
 
 		return request({
 			modelName: Review.name,
@@ -2142,7 +1806,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Review.createAsMe = Review._createAsMe = function () {
+	Review.createAsMe = function () {
 
 		return request({
 			modelName: Review.name,
@@ -2154,7 +1818,59 @@ module.exports = function (request) {
 		});
 	};
 
-	Review.updateAsMe = Review._updateAsMe = function () {
+	Review.flagAsMe = function () {
+
+		return request({
+			modelName: Review.name,
+			methodName: 'flagAsMe',
+			httpMethod: 'POST',
+			path: '/v1/me/products/reviews/{reviewId}/flag',
+			params: ['reviewId'],
+			withoutPayload: true,
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Review.cancelFlagAsMe = function () {
+
+		return request({
+			modelName: Review.name,
+			methodName: 'cancelFlagAsMe',
+			httpMethod: 'POST',
+			path: '/v1/me/products/reviews/{reviewId}/flag/cancel',
+			params: ['reviewId'],
+			withoutPayload: true,
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Review.helpedAsMe = function () {
+
+		return request({
+			modelName: Review.name,
+			methodName: 'helpedAsMe',
+			httpMethod: 'POST',
+			path: '/v1/me/products/reviews/{reviewId}/helped/{upDown}',
+			params: ['reviewId', 'upDown'],
+			withoutPayload: true,
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Review.cancelHelpedAsMe = function () {
+
+		return request({
+			modelName: Review.name,
+			methodName: 'cancelHelpedAsMe',
+			httpMethod: 'POST',
+			path: '/v1/me/products/reviews/{reviewId}/helped/{upDown}/cancel',
+			params: ['reviewId', 'upDown'],
+			withoutPayload: true,
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Review.updateAsMe = function () {
 
 		return request({
 			modelName: Review.name,
@@ -2166,59 +1882,7 @@ module.exports = function (request) {
 		});
 	};
 
-	Review.flagAsMe = Review._flagAsMe = function () {
-
-		return request({
-			modelName: Review.name,
-			methodName: 'flagAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/products/reviews/{reviewId}/flag',
-			params: ['reviewId'],
-			withoutPayload: true,
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	Review.helpedAsMe = Review._helpedAsMe = function () {
-
-		return request({
-			modelName: Review.name,
-			methodName: 'helpedAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/products/reviews/{reviewId}/helped/{upDown}',
-			params: ['reviewId', 'upDown'],
-			withoutPayload: true,
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	Review.cancelFlagAsMe = Review._cancelFlagAsMe = function () {
-
-		return request({
-			modelName: Review.name,
-			methodName: 'cancelFlagAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/products/reviews/{reviewId}/flag/cancel',
-			params: ['reviewId'],
-			withoutPayload: true,
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	Review.cancelHelpedAsMe = Review._cancelHelpedAsMe = function () {
-
-		return request({
-			modelName: Review.name,
-			methodName: 'cancelHelpedAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/products/reviews/{reviewId}/helped/{upDown}/cancel',
-			params: ['reviewId', 'upDown'],
-			withoutPayload: true,
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	Review.deleteAsMe = Review._deleteAsMe = function () {
+	Review.deleteAsMe = function () {
 
 		return request({
 			modelName: Review.name,
@@ -2233,14 +1897,17 @@ module.exports = function (request) {
 	return Review;
 };
 
-},{}],24:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var ReviewComment = { name: 'ReviewComment' };
+	var ReviewComment = {
+		name: 'ReviewComment',
+		path: 'products/reviews/comments'
+	};
 
-	ReviewComment.query = ReviewComment._query = function () {
+	ReviewComment.query = function () {
 
 		return request({
 			modelName: ReviewComment.name,
@@ -2252,7 +1919,7 @@ module.exports = function (request) {
 		});
 	};
 
-	ReviewComment.list = ReviewComment._list = function () {
+	ReviewComment.list = function () {
 
 		return request({
 			modelName: ReviewComment.name,
@@ -2264,7 +1931,7 @@ module.exports = function (request) {
 		});
 	};
 
-	ReviewComment.count = ReviewComment._count = function () {
+	ReviewComment.count = function () {
 
 		return request({
 			modelName: ReviewComment.name,
@@ -2276,7 +1943,7 @@ module.exports = function (request) {
 		});
 	};
 
-	ReviewComment.get = ReviewComment._get = function () {
+	ReviewComment.get = function () {
 
 		return request({
 			modelName: ReviewComment.name,
@@ -2288,7 +1955,7 @@ module.exports = function (request) {
 		});
 	};
 
-	ReviewComment.queryByReview = ReviewComment._queryByReview = function () {
+	ReviewComment.queryByReview = function () {
 
 		return request({
 			modelName: ReviewComment.name,
@@ -2300,7 +1967,7 @@ module.exports = function (request) {
 		});
 	};
 
-	ReviewComment.listByReview = ReviewComment._listByReview = function () {
+	ReviewComment.listByReview = function () {
 
 		return request({
 			modelName: ReviewComment.name,
@@ -2312,31 +1979,31 @@ module.exports = function (request) {
 		});
 	};
 
-	ReviewComment.queryByOwner = ReviewComment._queryByOwner = function () {
+	ReviewComment.queryByAuthor = function () {
 
 		return request({
 			modelName: ReviewComment.name,
-			methodName: 'queryByOwner',
+			methodName: 'queryByAuthor',
 			httpMethod: 'GET',
-			path: '/v1/{ownerModel}/{ownerId}/products/reviews/comments',
-			params: ['ownerModel', 'ownerId'],
+			path: '/v1/{authorModel}/{authorId}/products/reviews/comments',
+			params: ['authorModel', 'authorId'],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	ReviewComment.listByOwner = ReviewComment._listByOwner = function () {
+	ReviewComment.listByAuthor = function () {
 
 		return request({
 			modelName: ReviewComment.name,
-			methodName: 'listByOwner',
+			methodName: 'listByAuthor',
 			httpMethod: 'GET',
-			path: '/v1/{ownerModel}/{ownerId}/products/reviews/comments',
-			params: ['ownerModel', 'ownerId'],
+			path: '/v1/{authorModel}/{authorId}/products/reviews/comments',
+			params: ['authorModel', 'authorId'],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	ReviewComment.createAsMe = ReviewComment._createAsMe = function () {
+	ReviewComment.createAsMe = function () {
 
 		return request({
 			modelName: ReviewComment.name,
@@ -2348,7 +2015,33 @@ module.exports = function (request) {
 		});
 	};
 
-	ReviewComment.updateAsMe = ReviewComment._updateAsMe = function () {
+	ReviewComment.flagAsMe = function () {
+
+		return request({
+			modelName: ReviewComment.name,
+			methodName: 'flagAsMe',
+			httpMethod: 'POST',
+			path: '/v1/me/products/reviews/comments/{reviewCommentId}/flag',
+			params: ['reviewCommentId'],
+			withoutPayload: true,
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	ReviewComment.cancelFlagAsMe = function () {
+
+		return request({
+			modelName: ReviewComment.name,
+			methodName: 'cancelFlagAsMe',
+			httpMethod: 'POST',
+			path: '/v1/me/products/reviews/comments/{reviewCommentId}/flag/cancel',
+			params: ['reviewCommentId'],
+			withoutPayload: true,
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	ReviewComment.updateAsMe = function () {
 
 		return request({
 			modelName: ReviewComment.name,
@@ -2360,33 +2053,7 @@ module.exports = function (request) {
 		});
 	};
 
-	ReviewComment.flagAsMe = ReviewComment._flagAsMe = function () {
-
-		return request({
-			modelName: ReviewComment.name,
-			methodName: 'flagAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/products/reviews/comments/{reviewCommentId}/flag',
-			params: ['reviewCommentId'],
-			withoutPayload: true,
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ReviewComment.cancelFlagAsMe = ReviewComment._cancelFlagAsMe = function () {
-
-		return request({
-			modelName: ReviewComment.name,
-			methodName: 'cancelFlagAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/products/reviews/comments/{reviewCommentId}/flag/cancel',
-			params: ['reviewCommentId'],
-			withoutPayload: true,
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	ReviewComment.deleteAsMe = ReviewComment._deleteAsMe = function () {
+	ReviewComment.deleteAsMe = function () {
 
 		return request({
 			modelName: ReviewComment.name,
@@ -2401,114 +2068,59 @@ module.exports = function (request) {
 	return ReviewComment;
 };
 
-},{}],25:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var Shipping = { name: 'Shipping' };
-
-	Shipping.query = Shipping._query = function () {
-
-		return request({
-			modelName: Shipping.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/shippings',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
+	var ShippingMethod = {
+		name: 'ShippingMethod',
+		path: 'shipping/methods'
 	};
 
-	Shipping.list = Shipping._list = function () {
-
-		return request({
-			modelName: Shipping.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/shippings',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	Shipping.count = Shipping._count = function () {
-
-		return request({
-			modelName: Shipping.name,
-			methodName: 'count',
-			httpMethod: 'GET',
-			path: '/v1/shippings/count',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	Shipping.get = Shipping._get = function () {
-
-		return request({
-			modelName: Shipping.name,
-			methodName: 'get',
-			httpMethod: 'GET',
-			path: '/v1/shippings/{shippingId}',
-			params: ['shippingId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	return Shipping;
-};
-
-},{}],26:[function(require,module,exports){
-'use strict';
-
-module.exports = function (request) {
-
-	var ShippingMethod = { name: 'ShippingMethod' };
-
-	ShippingMethod.query = ShippingMethod._query = function () {
+	ShippingMethod.query = function () {
 
 		return request({
 			modelName: ShippingMethod.name,
 			methodName: 'query',
 			httpMethod: 'GET',
-			path: '/v1/shippings/methods',
+			path: '/v1/shipping/methods',
 			params: [],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	ShippingMethod.list = ShippingMethod._list = function () {
+	ShippingMethod.list = function () {
 
 		return request({
 			modelName: ShippingMethod.name,
 			methodName: 'list',
 			httpMethod: 'GET',
-			path: '/v1/shippings/methods',
+			path: '/v1/shipping/methods',
 			params: [],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	ShippingMethod.count = ShippingMethod._count = function () {
+	ShippingMethod.count = function () {
 
 		return request({
 			modelName: ShippingMethod.name,
 			methodName: 'count',
 			httpMethod: 'GET',
-			path: '/v1/shippings/methods/count',
+			path: '/v1/shipping/methods/count',
 			params: [],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	ShippingMethod.get = ShippingMethod._get = function () {
+	ShippingMethod.get = function () {
 
 		return request({
 			modelName: ShippingMethod.name,
 			methodName: 'get',
 			httpMethod: 'GET',
-			path: '/v1/shippings/methods/{shippingMethodId}',
+			path: '/v1/shipping/methods/{shippingMethodId}',
 			params: ['shippingMethodId'],
 			args: Array.prototype.slice.call(arguments)
 		});
@@ -2517,318 +2129,176 @@ module.exports = function (request) {
 	return ShippingMethod;
 };
 
-},{}],27:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var SupportCategory = { name: 'SupportCategory' };
-
-	SupportCategory.query = SupportCategory._query = function () {
-
-		return request({
-			modelName: SupportCategory.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/support/categories',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
+	var Store = {
+		name: 'Store',
+		path: 'store'
 	};
 
-	SupportCategory.list = SupportCategory._list = function () {
+	Store.get = function () {
 
 		return request({
-			modelName: SupportCategory.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/support/categories',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	SupportCategory.count = SupportCategory._count = function () {
-
-		return request({
-			modelName: SupportCategory.name,
-			methodName: 'count',
-			httpMethod: 'GET',
-			path: '/v1/support/categories/count',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	SupportCategory.get = SupportCategory._get = function () {
-
-		return request({
-			modelName: SupportCategory.name,
+			modelName: Store.name,
 			methodName: 'get',
 			httpMethod: 'GET',
-			path: '/v1/support/categories/{supportCategoryId}',
-			params: ['supportCategoryId'],
+			path: '/v1/store',
+			params: [],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	return SupportCategory;
+	return Store;
 };
 
-},{}],28:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var SupportComment = { name: 'SupportComment' };
-
-	SupportComment.queryAsMe = SupportComment._queryAsMe = function () {
-
-		return request({
-			modelName: SupportComment.name,
-			methodName: 'queryAsMe',
-			httpMethod: 'GET',
-			path: '/v1/me/support/posts/comments',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
+	var Subscription = {
+		name: 'Subscription',
+		path: ''
 	};
 
-	SupportComment.listAsMe = SupportComment._listAsMe = function () {
+	Subscription.query = function () {
 
 		return request({
-			modelName: SupportComment.name,
-			methodName: 'listAsMe',
-			httpMethod: 'GET',
-			path: '/v1/me/support/posts/comments',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	SupportComment.countAsMe = SupportComment._countAsMe = function () {
-
-		return request({
-			modelName: SupportComment.name,
-			methodName: 'countAsMe',
-			httpMethod: 'GET',
-			path: '/v1/me/support/posts/comments/count',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	SupportComment.getAsMe = SupportComment._getAsMe = function () {
-
-		return request({
-			modelName: SupportComment.name,
-			methodName: 'getAsMe',
-			httpMethod: 'GET',
-			path: '/v1/me/support/posts/comments/{supportCommentId}',
-			params: ['supportCommentId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	SupportComment.createAsMe = SupportComment._createAsMe = function () {
-
-		return request({
-			modelName: SupportComment.name,
-			methodName: 'createAsMe',
-			httpMethod: 'POST',
-			path: '/v1/me/support/posts/comments',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	SupportComment.updateAsMe = SupportComment._updateAsMe = function () {
-
-		return request({
-			modelName: SupportComment.name,
-			methodName: 'updateAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/support/posts/comments/{supportCommentId}',
-			params: ['supportCommentId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	SupportComment.deleteAsMe = SupportComment._deleteAsMe = function () {
-
-		return request({
-			modelName: SupportComment.name,
-			methodName: 'deleteAsMe',
-			httpMethod: 'DELETE',
-			path: '/v1/me/support/posts/comments/{supportCommentId}',
-			params: ['supportCommentId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	return SupportComment;
-};
-
-},{}],29:[function(require,module,exports){
-'use strict';
-
-module.exports = function (request) {
-
-	var SupportPost = { name: 'SupportPost' };
-
-	SupportPost.queryAsMe = SupportPost._queryAsMe = function () {
-
-		return request({
-			modelName: SupportPost.name,
-			methodName: 'queryAsMe',
-			httpMethod: 'GET',
-			path: '/v1/me/support/posts',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	SupportPost.listAsMe = SupportPost._listAsMe = function () {
-
-		return request({
-			modelName: SupportPost.name,
-			methodName: 'listAsMe',
-			httpMethod: 'GET',
-			path: '/v1/me/support/posts',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	SupportPost.countAsMe = SupportPost._countAsMe = function () {
-
-		return request({
-			modelName: SupportPost.name,
-			methodName: 'countAsMe',
-			httpMethod: 'GET',
-			path: '/v1/me/support/posts/count',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	SupportPost.getAsMe = SupportPost._getAsMe = function () {
-
-		return request({
-			modelName: SupportPost.name,
-			methodName: 'getAsMe',
-			httpMethod: 'GET',
-			path: '/v1/me/support/posts/{supportPostId}',
-			params: ['supportPostId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	SupportPost.createAsMe = SupportPost._createAsMe = function () {
-
-		return request({
-			modelName: SupportPost.name,
-			methodName: 'createAsMe',
-			httpMethod: 'POST',
-			path: '/v1/me/support/posts',
-			params: [],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	SupportPost.updateAsMe = SupportPost._updateAsMe = function () {
-
-		return request({
-			modelName: SupportPost.name,
-			methodName: 'updateAsMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/support/posts/{supportPostId}',
-			params: ['supportPostId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	SupportPost.deleteAsMe = SupportPost._deleteAsMe = function () {
-
-		return request({
-			modelName: SupportPost.name,
-			methodName: 'deleteAsMe',
-			httpMethod: 'DELETE',
-			path: '/v1/me/support/posts/{supportPostId}',
-			params: ['supportPostId'],
-			args: Array.prototype.slice.call(arguments)
-		});
-	};
-
-	return SupportPost;
-};
-
-},{}],30:[function(require,module,exports){
-'use strict';
-
-module.exports = function (request) {
-
-	var Tax = { name: 'Tax' };
-
-	Tax.query = Tax._query = function () {
-
-		return request({
-			modelName: Tax.name,
+			modelName: Subscription.name,
 			methodName: 'query',
 			httpMethod: 'GET',
-			path: '/v1/taxes',
+			path: '/v1/subscriptions',
 			params: [],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	Tax.list = Tax._list = function () {
+	Subscription.list = function () {
 
 		return request({
-			modelName: Tax.name,
+			modelName: Subscription.name,
 			methodName: 'list',
 			httpMethod: 'GET',
-			path: '/v1/taxes',
+			path: '/v1/subscriptions',
 			params: [],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	Tax.count = Tax._count = function () {
+	Subscription.count = function () {
 
 		return request({
-			modelName: Tax.name,
+			modelName: Subscription.name,
 			methodName: 'count',
 			httpMethod: 'GET',
-			path: '/v1/taxes/count',
+			path: '/v1/subscriptions/count',
 			params: [],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	Tax.get = Tax._get = function () {
+	Subscription.get = function () {
 
 		return request({
-			modelName: Tax.name,
+			modelName: Subscription.name,
 			methodName: 'get',
 			httpMethod: 'GET',
-			path: '/v1/taxes/{taxId}',
-			params: ['taxId'],
+			path: '/v1/subscriptions/{subscriptionId}',
+			params: ['subscriptionId'],
 			args: Array.prototype.slice.call(arguments)
 		});
 	};
 
-	return Tax;
+	Subscription.queryByCustomer = function () {
+
+		return request({
+			modelName: Subscription.name,
+			methodName: 'queryByCustomer',
+			httpMethod: 'GET',
+			path: '/v1/customers/{customerId}/subscriptions',
+			params: ['customerId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Subscription.listByCustomer = function () {
+
+		return request({
+			modelName: Subscription.name,
+			methodName: 'listByCustomer',
+			httpMethod: 'GET',
+			path: '/v1/customers/{customerId}/subscriptions',
+			params: ['customerId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Subscription.reject = function () {
+
+		return request({
+			modelName: Subscription.name,
+			methodName: 'reject',
+			httpMethod: 'POST',
+			path: '/v1/subscriptions/{subscriptionId}/reject',
+			params: ['subscriptionId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Subscription.cancel = function () {
+
+		return request({
+			modelName: Subscription.name,
+			methodName: 'cancel',
+			httpMethod: 'POST',
+			path: '/v1/subscriptions/{subscriptionId}/cancel',
+			params: ['subscriptionId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Subscription.start = function () {
+
+		return request({
+			modelName: Subscription.name,
+			methodName: 'start',
+			httpMethod: 'POST',
+			path: '/v1/subscriptions/{subscriptionId}/start',
+			params: ['subscriptionId'],
+			withoutPayload: true,
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Subscription.delete = function () {
+
+		return request({
+			modelName: Subscription.name,
+			methodName: 'delete',
+			httpMethod: 'DELETE',
+			path: '/v1/subscriptions/{subscriptionId}',
+			params: ['subscriptionId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	return Subscription;
 };
 
-},{}],31:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var TaxCategory = { name: 'TaxCategory' };
+	var TaxCategory = {
+		name: 'TaxCategory',
+		path: 'taxes/categories'
+	};
 
-	TaxCategory.query = TaxCategory._query = function () {
+	TaxCategory.query = function () {
 
 		return request({
 			modelName: TaxCategory.name,
@@ -2840,7 +2310,7 @@ module.exports = function (request) {
 		});
 	};
 
-	TaxCategory.list = TaxCategory._list = function () {
+	TaxCategory.list = function () {
 
 		return request({
 			modelName: TaxCategory.name,
@@ -2852,7 +2322,7 @@ module.exports = function (request) {
 		});
 	};
 
-	TaxCategory.count = TaxCategory._count = function () {
+	TaxCategory.count = function () {
 
 		return request({
 			modelName: TaxCategory.name,
@@ -2864,7 +2334,7 @@ module.exports = function (request) {
 		});
 	};
 
-	TaxCategory.get = TaxCategory._get = function () {
+	TaxCategory.get = function () {
 
 		return request({
 			modelName: TaxCategory.name,
@@ -2879,14 +2349,78 @@ module.exports = function (request) {
 	return TaxCategory;
 };
 
-},{}],32:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
 
-	var WishList = { name: 'WishList' };
+	var Warehouse = {
+		name: 'Warehouse',
+		path: 'warehouses'
+	};
 
-	WishList.queryAsMe = WishList._queryAsMe = function () {
+	Warehouse.query = function () {
+
+		return request({
+			modelName: Warehouse.name,
+			methodName: 'query',
+			httpMethod: 'GET',
+			path: '/v1/warehouses',
+			params: [],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Warehouse.list = function () {
+
+		return request({
+			modelName: Warehouse.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/warehouses',
+			params: [],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Warehouse.count = function () {
+
+		return request({
+			modelName: Warehouse.name,
+			methodName: 'count',
+			httpMethod: 'GET',
+			path: '/v1/warehouses/count',
+			params: [],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	Warehouse.get = function () {
+
+		return request({
+			modelName: Warehouse.name,
+			methodName: 'get',
+			httpMethod: 'GET',
+			path: '/v1/warehouses/{warehouseId}',
+			params: ['warehouseId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	return Warehouse;
+};
+
+},{}],25:[function(require,module,exports){
+'use strict';
+
+module.exports = function (request) {
+
+	var WishList = {
+		name: 'WishList',
+		path: 'wishlists'
+	};
+
+	WishList.queryAsMe = function () {
 
 		return request({
 			modelName: WishList.name,
@@ -2898,7 +2432,7 @@ module.exports = function (request) {
 		});
 	};
 
-	WishList.listAsMe = WishList._listAsMe = function () {
+	WishList.listAsMe = function () {
 
 		return request({
 			modelName: WishList.name,
@@ -2910,7 +2444,7 @@ module.exports = function (request) {
 		});
 	};
 
-	WishList.countAsMe = WishList._countAsMe = function () {
+	WishList.countAsMe = function () {
 
 		return request({
 			modelName: WishList.name,
@@ -2922,7 +2456,7 @@ module.exports = function (request) {
 		});
 	};
 
-	WishList.getAsMe = WishList._getAsMe = function () {
+	WishList.getAsMe = function () {
 
 		return request({
 			modelName: WishList.name,
@@ -2934,7 +2468,43 @@ module.exports = function (request) {
 		});
 	};
 
-	WishList.createAsMe = WishList._createAsMe = function () {
+	WishList.queryProductsAsMe = function () {
+
+		return request({
+			modelName: WishList.name,
+			methodName: 'queryProductsAsMe',
+			httpMethod: 'GET',
+			path: '/v1/me/wishlists/{wishListId}/products',
+			params: ['wishListId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	WishList.listProductsAsMe = function () {
+
+		return request({
+			modelName: WishList.name,
+			methodName: 'listProductsAsMe',
+			httpMethod: 'GET',
+			path: '/v1/me/wishlists/{wishListId}/products',
+			params: ['wishListId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	WishList.countProductsAsMe = function () {
+
+		return request({
+			modelName: WishList.name,
+			methodName: 'countProductsAsMe',
+			httpMethod: 'GET',
+			path: '/v1/me/wishlists/{wishListId}/products/count',
+			params: ['wishListId'],
+			args: Array.prototype.slice.call(arguments)
+		});
+	};
+
+	WishList.createAsMe = function () {
 
 		return request({
 			modelName: WishList.name,
@@ -2946,7 +2516,7 @@ module.exports = function (request) {
 		});
 	};
 
-	WishList.addItemAsMe = WishList._addItemAsMe = function () {
+	WishList.addItemAsMe = function () {
 
 		return request({
 			modelName: WishList.name,
@@ -2958,7 +2528,7 @@ module.exports = function (request) {
 		});
 	};
 
-	WishList.updateAsMe = WishList._updateAsMe = function () {
+	WishList.updateAsMe = function () {
 
 		return request({
 			modelName: WishList.name,
@@ -2970,7 +2540,7 @@ module.exports = function (request) {
 		});
 	};
 
-	WishList.deleteAsMe = WishList._deleteAsMe = function () {
+	WishList.deleteAsMe = function () {
 
 		return request({
 			modelName: WishList.name,
@@ -2982,7 +2552,7 @@ module.exports = function (request) {
 		});
 	};
 
-	WishList.emptyAsMe = WishList._emptyAsMe = function () {
+	WishList.emptyAsMe = function () {
 
 		return request({
 			modelName: WishList.name,
@@ -2994,7 +2564,7 @@ module.exports = function (request) {
 		});
 	};
 
-	WishList.deleteItemAsMe = WishList._deleteItemAsMe = function () {
+	WishList.deleteItemAsMe = function () {
 
 		return request({
 			modelName: WishList.name,
@@ -3009,27 +2579,7 @@ module.exports = function (request) {
 	return WishList;
 };
 
-},{}],33:[function(require,module,exports){
-"use strict";
-
-function TokenStorage(key) {
-
-	this.key = key;
-}
-
-TokenStorage.prototype.setToken = function (tokenDetail) {
-
-	localStorage.setItem(this.key, JSON.stringify(tokenDetail));
-};
-
-TokenStorage.prototype.getToken = function () {
-
-	return JSON.parse(localStorage.getItem(this.key) || null);
-};
-
-module.exports = TokenStorage;
-
-},{}],34:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 "use strict";
 
 module.exports = function (dest, source) {

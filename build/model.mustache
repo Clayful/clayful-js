@@ -1,8 +1,11 @@
 module.exports = request => {
 
-	const {{className}} = { name: '{{className}}' };
+	const {{className}} = {
+		name: '{{className}}',
+		path: '{{{pathName}}}'
+	};
 
-	{{#methods}}
+	{{#apis}}
 	{{className}}.{{method}} = function() {
 
 		return request({
@@ -18,24 +21,7 @@ module.exports = request => {
 
 	};
 
-	{{#aliases}}
-	{{className}}.{{.}} = function() {
-
-		return request({
-			modelName:      {{className}}.name,
-			methodName:     '{{.}}',
-			httpMethod:     '{{httpMethod}}',
-			path:           '{{{path}}}',
-			params:         [{{#arguments}}'{{{.}}}', {{/arguments}}],
-			{{#usesFormData}}usesFormData:   {{usesFormData}},
-			{{/usesFormData}}{{#withoutPayload}}withoutPayload: {{withoutPayload}},
-			{{/withoutPayload}}args:           Array.prototype.slice.call(arguments)
-		});
-
-	};
-	{{/aliases}}
-
-	{{/methods}}
+	{{/apis}}
 	return {{className}};
 
 };

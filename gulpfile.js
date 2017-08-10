@@ -9,41 +9,20 @@ const uglify = require('gulp-uglify');
 const buffer = require('vinyl-buffer');
 const source = require('vinyl-source-stream');
 const browserify = require('browserify');
-const apis = require('clayful-lib-spec/data/api.json');
-const aliases = require('clayful-lib-spec/data/aliases.json');
+const models = require('clayful-lib-spec/data/spec.json');
 
-// Change arguments to string and add aliases
-apis.forEach(a => {
+const nodeAPIs = _.cloneDeep(models);
+const jsAPIs = _.cloneDeep(models.map(m => {
 
-	_.forEach(aliases, (v, k) => {
+	m.apis = m.apis.filter(a => a.access.public);
 
-		if (!a.method.includes(k)) return;
+	return m;
 
-		a.aliases = (a.aliases || []).concat(v.map(alias => a.method.replace(k, alias)));
-
-	});
-
-});
-
-const toModels = apis => _.uniq(apis.map(a => a.className)).map(className => ({
-	className,
-	modelName: _.camelCase(className)
-}));
-
-const nodeAPIs = _.cloneDeep(apis);
-const jsAPIs = _.cloneDeep(apis.filter(a => a.access.public));
+}).filter(m => m.apis.length));
 
 const clients = {
-	node: {
-		apis:    nodeAPIs,
-		models:  toModels(nodeAPIs).sort((a, b) => a.modelName.localeCompare(b.modelName)),
-		byModel: _.groupBy(nodeAPIs, a => a.className)
-	},
-	js:   {
-		apis:    jsAPIs,
-		models:  toModels(jsAPIs).sort((a, b) => a.modelName.localeCompare(b.modelName)),
-		byModel: _.groupBy(jsAPIs, a => a.className)
-	},
+	node: nodeAPIs,
+	js:   jsAPIs,
 };
 
 const ext = '.js';
@@ -61,16 +40,12 @@ gulp.task(`models`, ['clean'], () => {
 
 	_.forEach(clients, (spec, clientName) => {
 
-		_.forEach(spec.byModel, (apis, modelName) => {
+		_.forEach(spec, model => {
 
 			gulp.src('./build/model.mustache')
-				.pipe(mustache({
-					modelName: modelName,
-					className: _.upperFirst(modelName),
-					methods:   apis
-				}))
+				.pipe(mustache(model))
 				.pipe(rename(path => {
-					path.basename = modelName;
+					path.basename = model.modelName;
 					path.extname = ext;
 				}))
 				.pipe(gulp.dest(`./lib/models-${ clientName }`));
@@ -86,7 +61,7 @@ gulp.task(`binder`, ['models'], () => {
 	_.forEach(clients, (spec, clientName) => {
 
 		gulp.src('./build/binder.mustache')
-			.pipe(mustache({ models: spec.models }))
+			.pipe(mustache(spec))
 			.pipe(rename(path => {
 				path.basename = 'index';
 				path.extname = ext;
