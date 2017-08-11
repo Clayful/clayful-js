@@ -24,6 +24,8 @@ module.exports = ClayfulError;
 },{}],2:[function(require,module,exports){
 'use strict';
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 var ClayfulError = require('../clayful-error');
 var assign = require('../util/assign');
 
@@ -32,6 +34,10 @@ var Clayful = {
 	defaultHeaders: {}, // extra headers to extend default request headers
 	plugins: {
 		request: null // request middleware
+	},
+	listeners: {
+		request: [],
+		response: []
 	}
 };
 
@@ -76,9 +82,24 @@ Clayful.getEndpoint = function (path) {
 	return '' + Clayful.baseUrl + path;
 };
 
-Clayful.wrapRequestCallback = function (requestDetail) {
-	return function (err, result) {
-		return requestDetail.callback(err, result, requestDetail);
+Clayful.wrapRequestCallback = function (extracted) {
+	return function (err) {
+		var response = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+
+
+		if (err) {
+			if (err.isClayful) {
+				// ClayfulError case
+				extracted.error = err;
+				Clayful.trigger('response', extracted);
+			}
+		} else {
+			// Success case
+			extracted.response = response;
+			Clayful.trigger('response', extracted);
+		}
+
+		extracted.callback(err, response, extracted);
 	};
 };
 
@@ -86,7 +107,8 @@ Clayful.extractRequestArguments = function (options) {
 
 	var result = {
 		httpMethod: options.httpMethod,
-		payload: null
+		payload: null,
+		meta: {}
 	};
 
 	var rest = options.args.slice(options.params.length);
@@ -98,7 +120,7 @@ Clayful.extractRequestArguments = function (options) {
 
 	if (typeof result.callback !== 'function') {
 
-		rest.push(result.callback); // restore rest array
+		rest.push(result.callback); // Restore rest array
 		result.callback = function () {}; // Put an empty function as default if the last argument isn't a function,
 	}
 
@@ -112,6 +134,15 @@ Clayful.extractRequestArguments = function (options) {
 	result.query = queryHeaders.query || {};
 	result.headers = Clayful.optionsToHeaders(queryHeaders || {});
 
+	// Set request meta
+	result.meta = queryHeaders.meta || {};
+
+	// Stringify query values
+	for (var key in result.query) {
+
+		result.query[key] = String(result.query[key]);
+	}
+
 	return result;
 };
 
@@ -124,13 +155,17 @@ Clayful.callAPI = function (options) {
 		requestUrl: Clayful.getEndpoint(extracted.requestUrl),
 		modelName: options.modelName,
 		methodName: options.methodName,
-		usesFormData: options.usesFormData
+		usesFormData: options.usesFormData,
+		error: null,
+		response: null
 	});
 
 	// Extend & overide default headers before making a request
 	var copied = assign({}, Clayful.defaultHeaders);
 
 	extracted.headers = assign(copied, extracted.headers);
+
+	Clayful.trigger('request', extracted);
 
 	// ClayfulError should be used for generating API errors from Clayful API
 	return request(extracted, ClayfulError, Clayful.wrapRequestCallback(extracted));
@@ -141,7 +176,7 @@ Clayful.setModels = function (models) {
 
 	var allModels = models(Clayful.callAPI);
 
-	// Get all models
+	// Get all models - it can be useful to generate Promisified APIs
 	Clayful.models = function () {
 
 		var models = [];
@@ -168,6 +203,126 @@ Clayful.install = function (plugin, options) {
 
 	Clayful.plugins[plugin] = Clayful.plugins[plugin] ? Clayful.plugins[plugin](options) : // use plug-in as a factory function
 	options; // or use options as a factory function or a function
+};
+
+// Add event listeners
+Clayful.on = function (eventName, callback) {
+
+	var listeners = Clayful.listeners[eventName];
+
+	if (!listeners) return;
+
+	listeners.push(callback);
+};
+
+// Removes event listeners
+Clayful.off = function (eventName, callback) {
+
+	var listeners = Clayful.listeners[eventName];
+
+	var index = listeners.indexOf(callback);
+
+	listeners.splice(index, 1);
+};
+
+// Triggers event listeners
+Clayful.trigger = function (eventName, data) {
+
+	var listeners = Clayful.listeners[eventName];
+
+	for (var i = 0; i < listeners.length; i++) {
+
+		listeners[i](data);
+	}
+};
+
+// Utilities
+
+Clayful.formatImageUrl = function (baseUrl) {
+	var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+
+	var query = [];
+
+	for (var key in options) {
+		query.push(key + '=' + options[key]);
+	}
+
+	var queryAsString = query.length ? '?' + query.join('&') : '';
+
+	return baseUrl + queryAsString;
+};
+
+Clayful.formatNumber = function (number) {
+	var currency = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+
+	if (typeof number !== 'number') {
+
+		return '';
+	}
+
+	var precision = currency.precision,
+	    _currency$delimiter = currency.delimiter,
+	    delimiter = _currency$delimiter === undefined ? {} : _currency$delimiter;
+	var _delimiter$thousands = delimiter.thousands,
+	    thousands = _delimiter$thousands === undefined ? '' : _delimiter$thousands,
+	    _delimiter$decimal = delimiter.decimal,
+	    decimal = _delimiter$decimal === undefined ? '.' : _delimiter$decimal;
+
+
+	if (typeof precision === 'number') {
+
+		var n = Math.pow(10, precision);
+
+		number = Math.round(number * n) / n;
+	}
+
+	var _String$split = String(number).split('.'),
+	    _String$split2 = _slicedToArray(_String$split, 2),
+	    a = _String$split2[0],
+	    _String$split2$ = _String$split2[1],
+	    b = _String$split2$ === undefined ? '' : _String$split2$;
+
+	var reversedArray = a.split('').reverse();
+
+	var segments = [];
+
+	while (reversedArray.length) {
+
+		segments.unshift(reversedArray.splice(0, 3).reverse().join(''));
+	}
+
+	if (precision) {
+
+		var diff = precision - b.length;
+
+		for (var i = 0; i < diff; i++) {
+			b += '0';
+		}
+	}
+
+	return [segments.join(thousands), b].join(b ? decimal : '');
+};
+
+Clayful.formatPrice = function (number) {
+	var currency = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+
+	var formattedNumber = Clayful.formatNumber(number, currency);
+
+	if (!formattedNumber) {
+
+		return '';
+	}
+
+	var _currency$symbol = currency.symbol,
+	    symbol = _currency$symbol === undefined ? '' : _currency$symbol,
+	    _currency$format = currency.format,
+	    format = _currency$format === undefined ? '{price}' : _currency$format;
+
+
+	return format.replace('{symbol}', symbol).replace('{price}', formattedNumber);
 };
 
 module.exports = Clayful;
