@@ -82,6 +82,21 @@ Clayful.getEndpoint = function (path) {
 	return '' + Clayful.baseUrl + path;
 };
 
+Clayful.normalizeQueryValues = function () {
+	var query = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+
+	var cloned = {};
+
+	// Stringify query values
+	for (var key in query) {
+
+		cloned[key] = encodeURIComponent(query[key]);
+	}
+
+	return cloned;
+};
+
 Clayful.wrapRequestCallback = function (extracted) {
 	return function (err) {
 		var response = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
@@ -131,17 +146,11 @@ Clayful.extractRequestArguments = function (options) {
 
 	var queryHeaders = rest.shift() || {};
 
-	result.query = queryHeaders.query || {};
+	result.query = Clayful.normalizeQueryValues(queryHeaders.query || {});
 	result.headers = Clayful.optionsToHeaders(queryHeaders || {});
 
 	// Set request meta
 	result.meta = queryHeaders.meta || {};
-
-	// Stringify query values
-	for (var key in result.query) {
-
-		result.query[key] = encodeURIComponent(result.query[key]);
-	}
 
 	return result;
 };
