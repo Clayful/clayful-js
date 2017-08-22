@@ -64,7 +64,7 @@ Clayful.optionsToHeaders = function () {
 	}
 
 	if (o.customer) {
-		headers['X-Clayful-Customer-Authorization'] = 'Bearer ' + o.customer;
+		headers['X-Clayful-Customer'] = o.customer;
 	}
 
 	if (o.errorLanguage) {
@@ -140,7 +140,7 @@ Clayful.extractRequestArguments = function (options) {
 	// Stringify query values
 	for (var key in result.query) {
 
-		result.query[key] = String(result.query[key]);
+		result.query[key] = encodeURIComponent(result.query[key]);
 	}
 
 	return result;
