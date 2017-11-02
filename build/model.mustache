@@ -1,23 +1,30 @@
+const assign = require('../util/assign');
+
 module.exports = request => {
 
 	const {{className}} = {
 		name: '{{className}}',
-		path: '{{{pathName}}}'
+		path: '{{{pathName}}}',
+		{{#apis}}
+		{{method}}: function() {
+			return request(assign({{className}}._{{method}}(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		{{/apis}}
 	};
 
 	{{#apis}}
-	{{className}}.{{method}} = function() {
+	{{className}}._{{method}} = function() {
 
-		return request({
+		return {
 			modelName:      {{className}}.name,
 			methodName:     '{{method}}',
 			httpMethod:     '{{httpMethod}}',
 			path:           '{{{path}}}',
 			params:         [{{#arguments}}'{{{.}}}', {{/arguments}}],
-			{{#usesFormData}}usesFormData:   {{usesFormData}},
-			{{/usesFormData}}{{#withoutPayload}}withoutPayload: {{withoutPayload}},
-			{{/withoutPayload}}args:           Array.prototype.slice.call(arguments)
-		});
+{{#usesFormData}}			usesFormData:   {{usesFormData}},
+{{/usesFormData}}{{#withoutPayload}}			withoutPayload: {{withoutPayload}},
+{{/withoutPayload}}
+		};
 
 	};
 
