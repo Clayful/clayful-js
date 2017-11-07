@@ -4,6 +4,13 @@
 var axiosRequestMiddleware = function axiosRequestMiddleware(axios) {
 	return function (detail, ClayfulError, callback) {
 
+		// Promise -> regular fn(err, result) format
+		var wrappedCallback = function wrappedCallback(err, result) {
+			return setTimeout(function () {
+				return callback(err, result);
+			}, 0);
+		};
+
 		var options = {
 			method: detail.httpMethod.toLowerCase(),
 			url: detail.requestUrl,
@@ -36,7 +43,7 @@ var axiosRequestMiddleware = function axiosRequestMiddleware(axios) {
 		}
 
 		axios(options).then(function (response) {
-			return callback(null, {
+			return wrappedCallback(null, {
 				status: response.status,
 				data: response.data,
 				headers: response.headers
@@ -44,12 +51,12 @@ var axiosRequestMiddleware = function axiosRequestMiddleware(axios) {
 		}).catch(function (err) {
 
 			if (!err.response) {
-				return callback(err);
+				return wrappedCallback(err);
 			}
 
 			var error = new ClayfulError(detail.modelName, detail.methodName, err.response.status, err.response.headers, err.response.data.errorCode, err.response.data.message || err.response.data.error, err.response.data.validation || null);
 
-			return callback(error);
+			return wrappedCallback(error);
 		});
 	};
 };

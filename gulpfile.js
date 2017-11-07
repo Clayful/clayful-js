@@ -79,7 +79,7 @@ gulp.task('compile', ['binder'], () => {
 		.bundle()
 		.pipe(source('index.js'))
 		.pipe(buffer())
-		.pipe(rename('clayful.js'))
+		.pipe(rename('clayful-js.js'))
 		.pipe(gulp.dest('./dist'))
 		.pipe(uglify())
 		.pipe(rename({ extname: '.min.js' }))

@@ -180,6 +180,55 @@ Clayful.callAPI = function (options) {
 	return request(extracted, ClayfulError, Clayful.wrapRequestCallback(extracted));
 };
 
+// Abstracted API request method
+Clayful.request = function (request, callback) {
+
+	var api = request.module || '';
+
+	var _api$split = api.split('.'),
+	    _api$split2 = _slicedToArray(_api$split, 2),
+	    model = _api$split2[0],
+	    method = _api$split2[1];
+
+	if (!api) throw new Error('Request module name is required.');
+	if (!Clayful[model]) throw new Error('Model \'' + model + '\' doesn\'t exist.');
+	if (!Clayful[model][method]) throw new Error('Method \'' + method + '\' doesn\'t exist in ' + model + '.');
+
+	var apiSpec = Clayful[model]['_' + method]();
+
+	// Set default values
+	request.params = request.params || {};
+	request.payload = request.payload || null;
+	// Copy `request.options` and set `query` and `headers`
+	request.options = assign({
+		query: request.query || {},
+		headers: request.headers || {}
+	}, request.options || {});
+
+	// Build arguments.
+	// Start with URL params.
+	var args = apiSpec.params.map(function (name) {
+		return request.params[name] || '';
+	});
+
+	// Set payload if it's needed
+	if ((apiSpec.httpMethod === 'POST' || apiSpec.httpMethod === 'PUT') && !apiSpec.withoutPayload) {
+
+		args.push(request.payload);
+	}
+
+	// Set query and headers
+	args.push(request.options);
+
+	// Set callback
+	if (callback) {
+		args.push(callback);
+	}
+
+	// Call API
+	return Clayful.callAPI(assign(apiSpec, { args: args }));
+};
+
 // Set model APIs
 Clayful.setModels = function (models) {
 
