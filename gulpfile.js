@@ -9,7 +9,7 @@ const uglify = require('gulp-uglify');
 const buffer = require('vinyl-buffer');
 const source = require('vinyl-source-stream');
 const browserify = require('browserify');
-const models = require('clayful-lib-spec/data/spec.json');
+const models = require('clayful-lib-spec');
 
 const nodeAPIs = _.cloneDeep(models);
 const jsAPIs = _.cloneDeep(models.map(m => {
