@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 
 function ClayfulError(modelName, methodName, status, headers, errorCode, message, validation) {
@@ -64,11 +64,15 @@ Clayful.optionsToHeaders = function () {
 	}
 
 	if (o.customer) {
-		headers['X-Clayful-Customer'] = o.customer;
+		headers['Authorization-Customer'] = o.customer;
 	}
 
-	if (o.errorLanguage) {
-		headers['X-Clayful-Error-Language'] = o.errorLanguage;
+	if (o.reCAPTCHA) {
+		headers['reCAPTCHA-Response'] = o.reCAPTCHA;
+	}
+
+	if (o.debugLanguage) {
+		headers['Accept-Debug-Language'] = o.debugLanguage;
 	}
 
 	if (o.headers) {
@@ -385,19 +389,19 @@ Clayful.formatPrice = function (number) {
 
 module.exports = Clayful;
 
-},{"../clayful-error":1,"../util/assign":26}],3:[function(require,module,exports){
+},{"../clayful-error":1,"../util/assign":29}],3:[function(require,module,exports){
 'use strict';
 
 var Clayful = require('../clayful');
 var models = require('../models-js');
 
-Clayful.defaultHeaders['X-Clayful-SDK'] = 'clayful-js';
+Clayful.defaultHeaders['Clayful-SDK'] = 'clayful-js';
 
 Clayful.setModels(models);
 
 module.exports = window.Clayful = Clayful;
 
-},{"../clayful":2,"../models-js":13}],4:[function(require,module,exports){
+},{"../clayful":2,"../models-js":15}],4:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -407,9 +411,6 @@ module.exports = function (request) {
 	var Brand = {
 		name: 'Brand',
 		path: 'brands',
-		query: function query() {
-			return request(assign(Brand._query(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		list: function list() {
 			return request(assign(Brand._list(), { args: Array.prototype.slice.call(arguments) }));
 		},
@@ -419,17 +420,6 @@ module.exports = function (request) {
 		get: function get() {
 			return request(assign(Brand._get(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Brand._query = function () {
-
-		return {
-			modelName: Brand.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/brands',
-			params: []
-		};
 	};
 
 	Brand._list = function () {
@@ -468,7 +458,7 @@ module.exports = function (request) {
 	return Brand;
 };
 
-},{"../util/assign":26}],5:[function(require,module,exports){
+},{"../util/assign":29}],5:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -478,128 +468,128 @@ module.exports = function (request) {
 	var Cart = {
 		name: 'Cart',
 		path: '',
-		countItemsAsMe: function countItemsAsMe() {
-			return request(assign(Cart._countItemsAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		countItemsForMe: function countItemsForMe() {
+			return request(assign(Cart._countItemsForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		getAsNonRegistered: function getAsNonRegistered() {
-			return request(assign(Cart._getAsNonRegistered(), { args: Array.prototype.slice.call(arguments) }));
+		getForMe: function getForMe() {
+			return request(assign(Cart._getForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		checkoutAsNonRegistered: function checkoutAsNonRegistered() {
-			return request(assign(Cart._checkoutAsNonRegistered(), { args: Array.prototype.slice.call(arguments) }));
+		addItemForMe: function addItemForMe() {
+			return request(assign(Cart._addItemForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		getAsMe: function getAsMe() {
-			return request(assign(Cart._getAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		getAsNonRegisteredForMe: function getAsNonRegisteredForMe() {
+			return request(assign(Cart._getAsNonRegisteredForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		checkoutAsMe: function checkoutAsMe() {
-			return request(assign(Cart._checkoutAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		checkoutForMe: function checkoutForMe() {
+			return request(assign(Cart._checkoutForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		addItemAsMe: function addItemAsMe() {
-			return request(assign(Cart._addItemAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		checkoutAsNonRegisteredForMe: function checkoutAsNonRegisteredForMe() {
+			return request(assign(Cart._checkoutAsNonRegisteredForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		updateItemAsMe: function updateItemAsMe() {
-			return request(assign(Cart._updateItemAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		updateItemForMe: function updateItemForMe() {
+			return request(assign(Cart._updateItemForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		emptyAsMe: function emptyAsMe() {
-			return request(assign(Cart._emptyAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		emptyForMe: function emptyForMe() {
+			return request(assign(Cart._emptyForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		deleteItemAsMe: function deleteItemAsMe() {
-			return request(assign(Cart._deleteItemAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		deleteItemForMe: function deleteItemForMe() {
+			return request(assign(Cart._deleteItemForMe(), { args: Array.prototype.slice.call(arguments) }));
 		}
 	};
 
-	Cart._countItemsAsMe = function () {
+	Cart._countItemsForMe = function () {
 
 		return {
 			modelName: Cart.name,
-			methodName: 'countItemsAsMe',
+			methodName: 'countItemsForMe',
 			httpMethod: 'GET',
 			path: '/v1/me/cart/items/count',
 			params: []
 		};
 	};
 
-	Cart._getAsNonRegistered = function () {
+	Cart._getForMe = function () {
 
 		return {
 			modelName: Cart.name,
-			methodName: 'getAsNonRegistered',
-			httpMethod: 'POST',
-			path: '/v1/cart',
-			params: []
-		};
-	};
-
-	Cart._checkoutAsNonRegistered = function () {
-
-		return {
-			modelName: Cart.name,
-			methodName: 'checkoutAsNonRegistered',
-			httpMethod: 'POST',
-			path: '/v1/cart/checkout',
-			params: []
-		};
-	};
-
-	Cart._getAsMe = function () {
-
-		return {
-			modelName: Cart.name,
-			methodName: 'getAsMe',
+			methodName: 'getForMe',
 			httpMethod: 'POST',
 			path: '/v1/me/cart',
 			params: []
 		};
 	};
 
-	Cart._checkoutAsMe = function () {
+	Cart._addItemForMe = function () {
 
 		return {
 			modelName: Cart.name,
-			methodName: 'checkoutAsMe',
-			httpMethod: 'POST',
-			path: '/v1/me/cart/checkout',
-			params: []
-		};
-	};
-
-	Cart._addItemAsMe = function () {
-
-		return {
-			modelName: Cart.name,
-			methodName: 'addItemAsMe',
+			methodName: 'addItemForMe',
 			httpMethod: 'POST',
 			path: '/v1/me/cart/items',
 			params: []
 		};
 	};
 
-	Cart._updateItemAsMe = function () {
+	Cart._getAsNonRegisteredForMe = function () {
 
 		return {
 			modelName: Cart.name,
-			methodName: 'updateItemAsMe',
+			methodName: 'getAsNonRegisteredForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/non-registered/cart',
+			params: []
+		};
+	};
+
+	Cart._checkoutForMe = function () {
+
+		return {
+			modelName: Cart.name,
+			methodName: 'checkoutForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/cart/checkout/{type}',
+			params: ['type']
+		};
+	};
+
+	Cart._checkoutAsNonRegisteredForMe = function () {
+
+		return {
+			modelName: Cart.name,
+			methodName: 'checkoutAsNonRegisteredForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/non-registered/cart/checkout/{type}',
+			params: ['type']
+		};
+	};
+
+	Cart._updateItemForMe = function () {
+
+		return {
+			modelName: Cart.name,
+			methodName: 'updateItemForMe',
 			httpMethod: 'PUT',
 			path: '/v1/me/cart/items/{itemId}',
 			params: ['itemId']
 		};
 	};
 
-	Cart._emptyAsMe = function () {
+	Cart._emptyForMe = function () {
 
 		return {
 			modelName: Cart.name,
-			methodName: 'emptyAsMe',
+			methodName: 'emptyForMe',
 			httpMethod: 'DELETE',
 			path: '/v1/me/cart/items',
 			params: []
 		};
 	};
 
-	Cart._deleteItemAsMe = function () {
+	Cart._deleteItemForMe = function () {
 
 		return {
 			modelName: Cart.name,
-			methodName: 'deleteItemAsMe',
+			methodName: 'deleteItemForMe',
 			httpMethod: 'DELETE',
 			path: '/v1/me/cart/items/{itemId}',
 			params: ['itemId']
@@ -609,7 +599,64 @@ module.exports = function (request) {
 	return Cart;
 };
 
-},{"../util/assign":26}],6:[function(require,module,exports){
+},{"../util/assign":29}],6:[function(require,module,exports){
+'use strict';
+
+var assign = require('../util/assign');
+
+module.exports = function (request) {
+
+	var Catalog = {
+		name: 'Catalog',
+		path: 'catalogs',
+		list: function list() {
+			return request(assign(Catalog._list(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		count: function count() {
+			return request(assign(Catalog._count(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		get: function get() {
+			return request(assign(Catalog._get(), { args: Array.prototype.slice.call(arguments) }));
+		}
+	};
+
+	Catalog._list = function () {
+
+		return {
+			modelName: Catalog.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/catalogs',
+			params: []
+		};
+	};
+
+	Catalog._count = function () {
+
+		return {
+			modelName: Catalog.name,
+			methodName: 'count',
+			httpMethod: 'GET',
+			path: '/v1/catalogs/count',
+			params: []
+		};
+	};
+
+	Catalog._get = function () {
+
+		return {
+			modelName: Catalog.name,
+			methodName: 'get',
+			httpMethod: 'GET',
+			path: '/v1/catalogs/{catalogId}',
+			params: ['catalogId']
+		};
+	};
+
+	return Catalog;
+};
+
+},{"../util/assign":29}],7:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -619,9 +666,6 @@ module.exports = function (request) {
 	var Collection = {
 		name: 'Collection',
 		path: 'collections',
-		query: function query() {
-			return request(assign(Collection._query(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		list: function list() {
 			return request(assign(Collection._list(), { args: Array.prototype.slice.call(arguments) }));
 		},
@@ -630,24 +674,7 @@ module.exports = function (request) {
 		},
 		get: function get() {
 			return request(assign(Collection._get(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		queryByParent: function queryByParent() {
-			return request(assign(Collection._queryByParent(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		listByParent: function listByParent() {
-			return request(assign(Collection._listByParent(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Collection._query = function () {
-
-		return {
-			modelName: Collection.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/collections',
-			params: []
-		};
 	};
 
 	Collection._list = function () {
@@ -683,32 +710,10 @@ module.exports = function (request) {
 		};
 	};
 
-	Collection._queryByParent = function () {
-
-		return {
-			modelName: Collection.name,
-			methodName: 'queryByParent',
-			httpMethod: 'GET',
-			path: '/v1/collections/{collectionId}/collections',
-			params: ['collectionId']
-		};
-	};
-
-	Collection._listByParent = function () {
-
-		return {
-			modelName: Collection.name,
-			methodName: 'listByParent',
-			httpMethod: 'GET',
-			path: '/v1/collections/{collectionId}/collections',
-			params: ['collectionId']
-		};
-	};
-
 	return Collection;
 };
 
-},{"../util/assign":26}],7:[function(require,module,exports){
+},{"../util/assign":29}],8:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -718,9 +723,6 @@ module.exports = function (request) {
 	var Country = {
 		name: 'Country',
 		path: 'countries',
-		query: function query() {
-			return request(assign(Country._query(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		list: function list() {
 			return request(assign(Country._list(), { args: Array.prototype.slice.call(arguments) }));
 		},
@@ -730,17 +732,6 @@ module.exports = function (request) {
 		get: function get() {
 			return request(assign(Country._get(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Country._query = function () {
-
-		return {
-			modelName: Country.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/countries',
-			params: []
-		};
 	};
 
 	Country._list = function () {
@@ -779,7 +770,7 @@ module.exports = function (request) {
 	return Country;
 };
 
-},{"../util/assign":26}],8:[function(require,module,exports){
+},{"../util/assign":29}],9:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -789,9 +780,6 @@ module.exports = function (request) {
 	var Coupon = {
 		name: 'Coupon',
 		path: 'coupons',
-		query: function query() {
-			return request(assign(Coupon._query(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		list: function list() {
 			return request(assign(Coupon._list(), { args: Array.prototype.slice.call(arguments) }));
 		},
@@ -801,17 +789,6 @@ module.exports = function (request) {
 		get: function get() {
 			return request(assign(Coupon._get(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Coupon._query = function () {
-
-		return {
-			modelName: Coupon.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/coupons',
-			params: []
-		};
 	};
 
 	Coupon._list = function () {
@@ -850,7 +827,7 @@ module.exports = function (request) {
 	return Coupon;
 };
 
-},{"../util/assign":26}],9:[function(require,module,exports){
+},{"../util/assign":29}],10:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -860,9 +837,6 @@ module.exports = function (request) {
 	var Currency = {
 		name: 'Currency',
 		path: 'currencies',
-		query: function query() {
-			return request(assign(Currency._query(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		list: function list() {
 			return request(assign(Currency._list(), { args: Array.prototype.slice.call(arguments) }));
 		},
@@ -872,17 +846,6 @@ module.exports = function (request) {
 		get: function get() {
 			return request(assign(Currency._get(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Currency._query = function () {
-
-		return {
-			modelName: Currency.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/currencies',
-			params: []
-		};
 	};
 
 	Currency._list = function () {
@@ -921,7 +884,7 @@ module.exports = function (request) {
 	return Currency;
 };
 
-},{"../util/assign":26}],10:[function(require,module,exports){
+},{"../util/assign":29}],11:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -934,20 +897,23 @@ module.exports = function (request) {
 		getMe: function getMe() {
 			return request(assign(Customer._getMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		queryCouponsAsMe: function queryCouponsAsMe() {
-			return request(assign(Customer._queryCouponsAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		isAuthenticated: function isAuthenticated() {
+			return request(assign(Customer._isAuthenticated(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		listCouponsAsMe: function listCouponsAsMe() {
-			return request(assign(Customer._listCouponsAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		listCouponsForMe: function listCouponsForMe() {
+			return request(assign(Customer._listCouponsForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		countCouponsAsMe: function countCouponsAsMe() {
-			return request(assign(Customer._countCouponsAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		countCouponsForMe: function countCouponsForMe() {
+			return request(assign(Customer._countCouponsForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		signup: function signup() {
-			return request(assign(Customer._signup(), { args: Array.prototype.slice.call(arguments) }));
+		createMe: function createMe() {
+			return request(assign(Customer._createMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		auth: function auth() {
-			return request(assign(Customer._auth(), { args: Array.prototype.slice.call(arguments) }));
+		authenticate: function authenticate() {
+			return request(assign(Customer._authenticate(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		authenticateBy3rdParty: function authenticateBy3rdParty() {
+			return request(assign(Customer._authenticateBy3rdParty(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		requestVerificationEmail: function requestVerificationEmail() {
 			return request(assign(Customer._requestVerificationEmail(), { args: Array.prototype.slice.call(arguments) }));
@@ -955,20 +921,20 @@ module.exports = function (request) {
 		verify: function verify() {
 			return request(assign(Customer._verify(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		resetPassword: function resetPassword() {
-			return request(assign(Customer._resetPassword(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		updateMe: function updateMe() {
 			return request(assign(Customer._updateMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		updateCredentialsAsMe: function updateCredentialsAsMe() {
-			return request(assign(Customer._updateCredentialsAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		updateCredentialsForMe: function updateCredentialsForMe() {
+			return request(assign(Customer._updateCredentialsForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		resetPassword: function resetPassword() {
+			return request(assign(Customer._resetPassword(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		deleteMe: function deleteMe() {
 			return request(assign(Customer._deleteMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		deleteCouponAsMe: function deleteCouponAsMe() {
-			return request(assign(Customer._deleteCouponAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		deleteCouponForMe: function deleteCouponForMe() {
+			return request(assign(Customer._deleteCouponForMe(), { args: Array.prototype.slice.call(arguments) }));
 		}
 	};
 
@@ -983,58 +949,70 @@ module.exports = function (request) {
 		};
 	};
 
-	Customer._queryCouponsAsMe = function () {
+	Customer._isAuthenticated = function () {
 
 		return {
 			modelName: Customer.name,
-			methodName: 'queryCouponsAsMe',
+			methodName: 'isAuthenticated',
+			httpMethod: 'GET',
+			path: '/v1/customers/auth',
+			params: []
+		};
+	};
+
+	Customer._listCouponsForMe = function () {
+
+		return {
+			modelName: Customer.name,
+			methodName: 'listCouponsForMe',
 			httpMethod: 'GET',
 			path: '/v1/me/coupons',
 			params: []
 		};
 	};
 
-	Customer._listCouponsAsMe = function () {
+	Customer._countCouponsForMe = function () {
 
 		return {
 			modelName: Customer.name,
-			methodName: 'listCouponsAsMe',
-			httpMethod: 'GET',
-			path: '/v1/me/coupons',
-			params: []
-		};
-	};
-
-	Customer._countCouponsAsMe = function () {
-
-		return {
-			modelName: Customer.name,
-			methodName: 'countCouponsAsMe',
+			methodName: 'countCouponsForMe',
 			httpMethod: 'GET',
 			path: '/v1/me/coupons/count',
 			params: []
 		};
 	};
 
-	Customer._signup = function () {
+	Customer._createMe = function () {
 
 		return {
 			modelName: Customer.name,
-			methodName: 'signup',
+			methodName: 'createMe',
 			httpMethod: 'POST',
 			path: '/v1/me',
 			params: []
 		};
 	};
 
-	Customer._auth = function () {
+	Customer._authenticate = function () {
 
 		return {
 			modelName: Customer.name,
-			methodName: 'auth',
+			methodName: 'authenticate',
 			httpMethod: 'POST',
 			path: '/v1/customers/auth',
 			params: []
+		};
+	};
+
+	Customer._authenticateBy3rdParty = function () {
+
+		return {
+			modelName: Customer.name,
+			methodName: 'authenticateBy3rdParty',
+			httpMethod: 'POST',
+			path: '/v1/customers/auth/{vendor}',
+			params: ['vendor'],
+			withoutPayload: true
 		};
 	};
 
@@ -1055,18 +1033,7 @@ module.exports = function (request) {
 			modelName: Customer.name,
 			methodName: 'verify',
 			httpMethod: 'POST',
-			path: '/v1/customers/{customerId}/verify',
-			params: ['customerId']
-		};
-	};
-
-	Customer._resetPassword = function () {
-
-		return {
-			modelName: Customer.name,
-			methodName: 'resetPassword',
-			httpMethod: 'POST',
-			path: '/v1/customers/{customerId}/password/reset',
+			path: '/v1/customers/{customerId}/verified',
 			params: ['customerId']
 		};
 	};
@@ -1082,14 +1049,25 @@ module.exports = function (request) {
 		};
 	};
 
-	Customer._updateCredentialsAsMe = function () {
+	Customer._updateCredentialsForMe = function () {
 
 		return {
 			modelName: Customer.name,
-			methodName: 'updateCredentialsAsMe',
+			methodName: 'updateCredentialsForMe',
 			httpMethod: 'PUT',
 			path: '/v1/me/credentials',
 			params: []
+		};
+	};
+
+	Customer._resetPassword = function () {
+
+		return {
+			modelName: Customer.name,
+			methodName: 'resetPassword',
+			httpMethod: 'PUT',
+			path: '/v1/customers/{customerId}/password',
+			params: ['customerId']
 		};
 	};
 
@@ -1104,11 +1082,11 @@ module.exports = function (request) {
 		};
 	};
 
-	Customer._deleteCouponAsMe = function () {
+	Customer._deleteCouponForMe = function () {
 
 		return {
 			modelName: Customer.name,
-			methodName: 'deleteCouponAsMe',
+			methodName: 'deleteCouponForMe',
 			httpMethod: 'DELETE',
 			path: '/v1/me/coupons/{couponId}',
 			params: ['couponId']
@@ -1118,7 +1096,7 @@ module.exports = function (request) {
 	return Customer;
 };
 
-},{"../util/assign":26}],11:[function(require,module,exports){
+},{"../util/assign":29}],12:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1128,9 +1106,6 @@ module.exports = function (request) {
 	var Group = {
 		name: 'Group',
 		path: 'groups',
-		query: function query() {
-			return request(assign(Group._query(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		list: function list() {
 			return request(assign(Group._list(), { args: Array.prototype.slice.call(arguments) }));
 		},
@@ -1140,17 +1115,6 @@ module.exports = function (request) {
 		get: function get() {
 			return request(assign(Group._get(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Group._query = function () {
-
-		return {
-			modelName: Group.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/groups',
-			params: []
-		};
 	};
 
 	Group._list = function () {
@@ -1189,7 +1153,7 @@ module.exports = function (request) {
 	return Group;
 };
 
-},{"../util/assign":26}],12:[function(require,module,exports){
+},{"../util/assign":29}],13:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1199,41 +1163,169 @@ module.exports = function (request) {
 	var Image = {
 		name: 'Image',
 		path: 'images',
-		addToReviewAsMe: function addToReviewAsMe() {
-			return request(assign(Image._addToReviewAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		listForMe: function listForMe() {
+			return request(assign(Image._listForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		deleteFromReviewAsMe: function deleteFromReviewAsMe() {
-			return request(assign(Image._deleteFromReviewAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		countForMe: function countForMe() {
+			return request(assign(Image._countForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		getForMe: function getForMe() {
+			return request(assign(Image._getForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		createForMe: function createForMe() {
+			return request(assign(Image._createForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		updateForMe: function updateForMe() {
+			return request(assign(Image._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		deleteForMe: function deleteForMe() {
+			return request(assign(Image._deleteForMe(), { args: Array.prototype.slice.call(arguments) }));
 		}
 	};
 
-	Image._addToReviewAsMe = function () {
+	Image._listForMe = function () {
 
 		return {
 			modelName: Image.name,
-			methodName: 'addToReviewAsMe',
+			methodName: 'listForMe',
+			httpMethod: 'GET',
+			path: '/v1/me/images',
+			params: []
+		};
+	};
+
+	Image._countForMe = function () {
+
+		return {
+			modelName: Image.name,
+			methodName: 'countForMe',
+			httpMethod: 'GET',
+			path: '/v1/me/images/count',
+			params: []
+		};
+	};
+
+	Image._getForMe = function () {
+
+		return {
+			modelName: Image.name,
+			methodName: 'getForMe',
+			httpMethod: 'GET',
+			path: '/v1/me/images/{imageId}',
+			params: ['imageId']
+		};
+	};
+
+	Image._createForMe = function () {
+
+		return {
+			modelName: Image.name,
+			methodName: 'createForMe',
 			httpMethod: 'POST',
-			path: '/v1/me/products/reviews/{reviewId}/images',
-			params: ['reviewId'],
+			path: '/v1/me/images',
+			params: [],
 			usesFormData: true
 		};
 	};
 
-	Image._deleteFromReviewAsMe = function () {
+	Image._updateForMe = function () {
 
 		return {
 			modelName: Image.name,
-			methodName: 'deleteFromReviewAsMe',
+			methodName: 'updateForMe',
+			httpMethod: 'PUT',
+			path: '/v1/me/images/{imageId}',
+			params: ['imageId'],
+			usesFormData: true
+		};
+	};
+
+	Image._deleteForMe = function () {
+
+		return {
+			modelName: Image.name,
+			methodName: 'deleteForMe',
 			httpMethod: 'DELETE',
-			path: '/v1/me/products/reviews/{reviewId}/images/{imageId}',
-			params: ['reviewId', 'imageId']
+			path: '/v1/me/images/{imageId}',
+			params: ['imageId']
 		};
 	};
 
 	return Image;
 };
 
-},{"../util/assign":26}],13:[function(require,module,exports){
+},{"../util/assign":29}],14:[function(require,module,exports){
+'use strict';
+
+var assign = require('../util/assign');
+
+module.exports = function (request) {
+
+	var Impression = {
+		name: 'Impression',
+		path: '',
+		topBrands: function topBrands() {
+			return request(assign(Impression._topBrands(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		topProducts: function topProducts() {
+			return request(assign(Impression._topProducts(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		topCollections: function topCollections() {
+			return request(assign(Impression._topCollections(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		gather: function gather() {
+			return request(assign(Impression._gather(), { args: Array.prototype.slice.call(arguments) }));
+		}
+	};
+
+	Impression._topBrands = function () {
+
+		return {
+			modelName: Impression.name,
+			methodName: 'topBrands',
+			httpMethod: 'GET',
+			path: '/v1/impressions/{scope}/top/brands',
+			params: ['scope']
+		};
+	};
+
+	Impression._topProducts = function () {
+
+		return {
+			modelName: Impression.name,
+			methodName: 'topProducts',
+			httpMethod: 'GET',
+			path: '/v1/impressions/{scope}/top/products',
+			params: ['scope']
+		};
+	};
+
+	Impression._topCollections = function () {
+
+		return {
+			modelName: Impression.name,
+			methodName: 'topCollections',
+			httpMethod: 'GET',
+			path: '/v1/impressions/{scope}/top/collections',
+			params: ['scope']
+		};
+	};
+
+	Impression._gather = function () {
+
+		return {
+			modelName: Impression.name,
+			methodName: 'gather',
+			httpMethod: 'POST',
+			path: '/v1/impressions/{scope}',
+			params: ['scope']
+		};
+	};
+
+	return Impression;
+};
+
+},{"../util/assign":29}],15:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
@@ -1241,6 +1333,7 @@ module.exports = function (request) {
 
 		Brand: require('./brand.js')(request),
 		Cart: require('./cart.js')(request),
+		Catalog: require('./catalog.js')(request),
 		Collection: require('./collection.js')(request),
 		Country: require('./country.js')(request),
 		Coupon: require('./coupon.js')(request),
@@ -1248,6 +1341,7 @@ module.exports = function (request) {
 		Customer: require('./customer.js')(request),
 		Group: require('./group.js')(request),
 		Image: require('./image.js')(request),
+		Impression: require('./impression.js')(request),
 		Order: require('./order.js')(request),
 		OrderTag: require('./orderTag.js')(request),
 		PaymentMethod: require('./paymentMethod.js')(request),
@@ -1257,14 +1351,15 @@ module.exports = function (request) {
 		ShippingMethod: require('./shippingMethod.js')(request),
 		Store: require('./store.js')(request),
 		Subscription: require('./subscription.js')(request),
+		SubscriptionPlan: require('./subscriptionPlan.js')(request),
 		TaxCategory: require('./taxCategory.js')(request),
-		Warehouse: require('./warehouse.js')(request),
+		Tracker: require('./tracker.js')(request),
 		WishList: require('./wishList.js')(request)
 
 	};
 };
 
-},{"./brand.js":4,"./cart.js":5,"./collection.js":6,"./country.js":7,"./coupon.js":8,"./currency.js":9,"./customer.js":10,"./group.js":11,"./image.js":12,"./order.js":14,"./orderTag.js":15,"./paymentMethod.js":16,"./product.js":17,"./review.js":18,"./reviewComment.js":19,"./shippingMethod.js":20,"./store.js":21,"./subscription.js":22,"./taxCategory.js":23,"./warehouse.js":24,"./wishList.js":25}],14:[function(require,module,exports){
+},{"./brand.js":4,"./cart.js":5,"./catalog.js":6,"./collection.js":7,"./country.js":8,"./coupon.js":9,"./currency.js":10,"./customer.js":11,"./group.js":12,"./image.js":13,"./impression.js":14,"./order.js":16,"./orderTag.js":17,"./paymentMethod.js":18,"./product.js":19,"./review.js":20,"./reviewComment.js":21,"./shippingMethod.js":22,"./store.js":23,"./subscription.js":24,"./subscriptionPlan.js":25,"./taxCategory.js":26,"./tracker.js":27,"./wishList.js":28}],16:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1274,621 +1369,253 @@ module.exports = function (request) {
 	var Order = {
 		name: 'Order',
 		path: 'orders',
-		query: function query() {
-			return request(assign(Order._query(), { args: Array.prototype.slice.call(arguments) }));
+		listForMe: function listForMe() {
+			return request(assign(Order._listForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		list: function list() {
-			return request(assign(Order._list(), { args: Array.prototype.slice.call(arguments) }));
+		countForMe: function countForMe() {
+			return request(assign(Order._countForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		count: function count() {
-			return request(assign(Order._count(), { args: Array.prototype.slice.call(arguments) }));
+		getForMe: function getForMe() {
+			return request(assign(Order._getForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		get: function get() {
-			return request(assign(Order._get(), { args: Array.prototype.slice.call(arguments) }));
+		listBySubscriptionForMe: function listBySubscriptionForMe() {
+			return request(assign(Order._listBySubscriptionForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		queryByCustomer: function queryByCustomer() {
-			return request(assign(Order._queryByCustomer(), { args: Array.prototype.slice.call(arguments) }));
+		authenticate: function authenticate() {
+			return request(assign(Order._authenticate(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		listByCustomer: function listByCustomer() {
-			return request(assign(Order._listByCustomer(), { args: Array.prototype.slice.call(arguments) }));
+		cancelForMe: function cancelForMe() {
+			return request(assign(Order._cancelForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		getTicketDetails: function getTicketDetails() {
-			return request(assign(Order._getTicketDetails(), { args: Array.prototype.slice.call(arguments) }));
+		markAsArrivedForMe: function markAsArrivedForMe() {
+			return request(assign(Order._markAsArrivedForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		getSyncOperationErrors: function getSyncOperationErrors() {
-			return request(assign(Order._getSyncOperationErrors(), { args: Array.prototype.slice.call(arguments) }));
+		requestRefundForMe: function requestRefundForMe() {
+			return request(assign(Order._requestRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		createFulfillment: function createFulfillment() {
-			return request(assign(Order._createFulfillment(), { args: Array.prototype.slice.call(arguments) }));
+		requestFullRefundForMe: function requestFullRefundForMe() {
+			return request(assign(Order._requestFullRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		recover: function recover() {
-			return request(assign(Order._recover(), { args: Array.prototype.slice.call(arguments) }));
+		cancelRefundForMe: function cancelRefundForMe() {
+			return request(assign(Order._cancelRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		cancel: function cancel() {
-			return request(assign(Order._cancel(), { args: Array.prototype.slice.call(arguments) }));
+		createDownloadUrlForMe: function createDownloadUrlForMe() {
+			return request(assign(Order._createDownloadUrlForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		reject: function reject() {
-			return request(assign(Order._reject(), { args: Array.prototype.slice.call(arguments) }));
+		updateForMe: function updateForMe() {
+			return request(assign(Order._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		undone: function undone() {
-			return request(assign(Order._undone(), { args: Array.prototype.slice.call(arguments) }));
+		updateTransactionsForMe: function updateTransactionsForMe() {
+			return request(assign(Order._updateTransactionsForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		done: function done() {
-			return request(assign(Order._done(), { args: Array.prototype.slice.call(arguments) }));
+		updateCancellationForMe: function updateCancellationForMe() {
+			return request(assign(Order._updateCancellationForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		verifyTicket: function verifyTicket() {
-			return request(assign(Order._verifyTicket(), { args: Array.prototype.slice.call(arguments) }));
+		updateRefundForMe: function updateRefundForMe() {
+			return request(assign(Order._updateRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		useTicket: function useTicket() {
-			return request(assign(Order._useTicket(), { args: Array.prototype.slice.call(arguments) }));
+		updateRefundCancellationForMe: function updateRefundCancellationForMe() {
+			return request(assign(Order._updateRefundCancellationForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		recoverTicket: function recoverTicket() {
-			return request(assign(Order._recoverTicket(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		createFullPaymentTransaction: function createFullPaymentTransaction() {
-			return request(assign(Order._createFullPaymentTransaction(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		createAllFulfillments: function createAllFulfillments() {
-			return request(assign(Order._createAllFulfillments(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		createFullRefund: function createFullRefund() {
-			return request(assign(Order._createFullRefund(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		createPartialPaymentTransaction: function createPartialPaymentTransaction() {
-			return request(assign(Order._createPartialPaymentTransaction(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		createPartialRefund: function createPartialRefund() {
-			return request(assign(Order._createPartialRefund(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		rejectRefund: function rejectRefund() {
-			return request(assign(Order._rejectRefund(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		syncPaymentTransaction: function syncPaymentTransaction() {
-			return request(assign(Order._syncPaymentTransaction(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		recoverDownload: function recoverDownload() {
-			return request(assign(Order._recoverDownload(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		partialRestock: function partialRestock() {
-			return request(assign(Order._partialRestock(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		createFullRefundTransaction: function createFullRefundTransaction() {
-			return request(assign(Order._createFullRefundTransaction(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		fullRestock: function fullRestock() {
-			return request(assign(Order._fullRestock(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		createDownloadableUrl: function createDownloadableUrl() {
-			return request(assign(Order._createDownloadableUrl(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		createPartialRefundTransaction: function createPartialRefundTransaction() {
-			return request(assign(Order._createPartialRefundTransaction(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		syncRefundTransaction: function syncRefundTransaction() {
-			return request(assign(Order._syncRefundTransaction(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		update: function update() {
-			return request(assign(Order._update(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		updateFulfillment: function updateFulfillment() {
-			return request(assign(Order._updateFulfillment(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		updateItem: function updateItem() {
-			return request(assign(Order._updateItem(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		updatePaymentTransaction: function updatePaymentTransaction() {
-			return request(assign(Order._updatePaymentTransaction(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		updateRefund: function updateRefund() {
-			return request(assign(Order._updateRefund(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		updateRefundTransaction: function updateRefundTransaction() {
-			return request(assign(Order._updateRefundTransaction(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		delete: function _delete() {
-			return request(assign(Order._delete(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		deletePaymentTransaction: function deletePaymentTransaction() {
-			return request(assign(Order._deletePaymentTransaction(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		deleteRefund: function deleteRefund() {
-			return request(assign(Order._deleteRefund(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		deleteFulfillment: function deleteFulfillment() {
-			return request(assign(Order._deleteFulfillment(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		deleteSyncOperation: function deleteSyncOperation() {
-			return request(assign(Order._deleteSyncOperation(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		deleteRefundTransaction: function deleteRefundTransaction() {
-			return request(assign(Order._deleteRefundTransaction(), { args: Array.prototype.slice.call(arguments) }));
+		markAsNotArrivedForMe: function markAsNotArrivedForMe() {
+			return request(assign(Order._markAsNotArrivedForMe(), { args: Array.prototype.slice.call(arguments) }));
 		}
 	};
 
-	Order._query = function () {
+	Order._listForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'query',
+			methodName: 'listForMe',
 			httpMethod: 'GET',
-			path: '/v1/orders',
+			path: '/v1/me/orders',
 			params: []
 		};
 	};
 
-	Order._list = function () {
+	Order._countForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'list',
+			methodName: 'countForMe',
 			httpMethod: 'GET',
-			path: '/v1/orders',
+			path: '/v1/me/orders/count',
 			params: []
 		};
 	};
 
-	Order._count = function () {
+	Order._getForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'count',
+			methodName: 'getForMe',
 			httpMethod: 'GET',
-			path: '/v1/orders/count',
-			params: []
-		};
-	};
-
-	Order._get = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'get',
-			httpMethod: 'GET',
-			path: '/v1/orders/{orderId}',
+			path: '/v1/me/orders/{orderId}',
 			params: ['orderId']
 		};
 	};
 
-	Order._queryByCustomer = function () {
+	Order._listBySubscriptionForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'queryByCustomer',
+			methodName: 'listBySubscriptionForMe',
 			httpMethod: 'GET',
-			path: '/v1/customers/{customerId}/orders',
-			params: ['customerId']
+			path: '/v1/me/subscriptions/{subscriptionId}/orders',
+			params: ['subscriptionId']
 		};
 	};
 
-	Order._listByCustomer = function () {
+	Order._authenticate = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'listByCustomer',
-			httpMethod: 'GET',
-			path: '/v1/customers/{customerId}/orders',
-			params: ['customerId']
-		};
-	};
-
-	Order._getTicketDetails = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'getTicketDetails',
-			httpMethod: 'GET',
-			path: '/v1/orders/tickets/{code}/details',
-			params: ['code']
-		};
-	};
-
-	Order._getSyncOperationErrors = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'getSyncOperationErrors',
-			httpMethod: 'GET',
-			path: '/v1/orders/{orderId}/sync/operations/errors',
-			params: ['orderId']
-		};
-	};
-
-	Order._createFulfillment = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'createFulfillment',
+			methodName: 'authenticate',
 			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/fulfillments',
+			path: '/v1/orders/{orderId}/auth',
 			params: ['orderId']
 		};
 	};
 
-	Order._recover = function () {
+	Order._cancelForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'recover',
+			methodName: 'cancelForMe',
 			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/recover',
+			path: '/v1/me/orders/{orderId}/cancellation',
+			params: ['orderId']
+		};
+	};
+
+	Order._markAsArrivedForMe = function () {
+
+		return {
+			modelName: Order.name,
+			methodName: 'markAsArrivedForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/orders/{orderId}/arrived',
 			params: ['orderId'],
 			withoutPayload: true
 		};
 	};
 
-	Order._cancel = function () {
+	Order._requestRefundForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'cancel',
+			methodName: 'requestRefundForMe',
 			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/cancel',
+			path: '/v1/me/orders/{orderId}/refunds',
 			params: ['orderId']
 		};
 	};
 
-	Order._reject = function () {
+	Order._requestFullRefundForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'reject',
+			methodName: 'requestFullRefundForMe',
 			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/reject',
+			path: '/v1/me/orders/{orderId}/refunds/full',
 			params: ['orderId']
 		};
 	};
 
-	Order._undone = function () {
+	Order._cancelRefundForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'undone',
+			methodName: 'cancelRefundForMe',
 			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/undone',
+			path: '/v1/me/orders/{orderId}/refunds/{refundId}/cancellation',
+			params: ['orderId', 'refundId']
+		};
+	};
+
+	Order._createDownloadUrlForMe = function () {
+
+		return {
+			modelName: Order.name,
+			methodName: 'createDownloadUrlForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/orders/{orderId}/items/{itemId}/download/url',
+			params: ['orderId', 'itemId'],
+			withoutPayload: true
+		};
+	};
+
+	Order._updateForMe = function () {
+
+		return {
+			modelName: Order.name,
+			methodName: 'updateForMe',
+			httpMethod: 'PUT',
+			path: '/v1/me/orders/{orderId}',
+			params: ['orderId']
+		};
+	};
+
+	Order._updateTransactionsForMe = function () {
+
+		return {
+			modelName: Order.name,
+			methodName: 'updateTransactionsForMe',
+			httpMethod: 'PUT',
+			path: '/v1/me/orders/{orderId}/transactions',
 			params: ['orderId'],
 			withoutPayload: true
 		};
 	};
 
-	Order._done = function () {
+	Order._updateCancellationForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'done',
-			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/done',
-			params: ['orderId'],
-			withoutPayload: true
-		};
-	};
-
-	Order._verifyTicket = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'verifyTicket',
-			httpMethod: 'POST',
-			path: '/v1/orders/tickets/{code}/verify',
-			params: ['code']
-		};
-	};
-
-	Order._useTicket = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'useTicket',
-			httpMethod: 'POST',
-			path: '/v1/orders/tickets/{code}/use',
-			params: ['code'],
-			withoutPayload: true
-		};
-	};
-
-	Order._recoverTicket = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'recoverTicket',
-			httpMethod: 'POST',
-			path: '/v1/orders/tickets/{code}/recover',
-			params: ['code']
-		};
-	};
-
-	Order._createFullPaymentTransaction = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'createFullPaymentTransaction',
-			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/transactions/full',
+			methodName: 'updateCancellationForMe',
+			httpMethod: 'PUT',
+			path: '/v1/me/orders/{orderId}/cancellation',
 			params: ['orderId']
 		};
 	};
 
-	Order._createAllFulfillments = function () {
+	Order._updateRefundForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'createAllFulfillments',
-			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/fulfillments/all',
-			params: ['orderId']
-		};
-	};
-
-	Order._createFullRefund = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'createFullRefund',
-			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/refunds/full',
-			params: ['orderId']
-		};
-	};
-
-	Order._createPartialPaymentTransaction = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'createPartialPaymentTransaction',
-			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/transactions/partial',
-			params: ['orderId']
-		};
-	};
-
-	Order._createPartialRefund = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'createPartialRefund',
-			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/refunds/partial',
-			params: ['orderId']
-		};
-	};
-
-	Order._rejectRefund = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'rejectRefund',
-			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/refunds/{refundId}/reject',
+			methodName: 'updateRefundForMe',
+			httpMethod: 'PUT',
+			path: '/v1/me/orders/{orderId}/refunds/{refundId}',
 			params: ['orderId', 'refundId']
 		};
 	};
 
-	Order._syncPaymentTransaction = function () {
+	Order._updateRefundCancellationForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'syncPaymentTransaction',
-			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/transactions/{transactionId}/sync',
-			params: ['orderId', 'transactionId'],
-			withoutPayload: true
-		};
-	};
-
-	Order._recoverDownload = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'recoverDownload',
-			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/items/{itemId}/download/recover',
-			params: ['orderId', 'itemId']
-		};
-	};
-
-	Order._partialRestock = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'partialRestock',
-			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/refunds/{refundId}/restock/partial',
-			params: ['orderId', 'refundId']
-		};
-	};
-
-	Order._createFullRefundTransaction = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'createFullRefundTransaction',
-			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/refunds/{refundId}/transactions/full',
-			params: ['orderId', 'refundId']
-		};
-	};
-
-	Order._fullRestock = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'fullRestock',
-			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/refunds/{refundId}/restock/full',
-			params: ['orderId', 'refundId'],
-			withoutPayload: true
-		};
-	};
-
-	Order._createDownloadableUrl = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'createDownloadableUrl',
-			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/items/{itemId}/download/url',
-			params: ['orderId', 'itemId']
-		};
-	};
-
-	Order._createPartialRefundTransaction = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'createPartialRefundTransaction',
-			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/refunds/{refundId}/transactions/partial',
-			params: ['orderId', 'refundId']
-		};
-	};
-
-	Order._syncRefundTransaction = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'syncRefundTransaction',
-			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/refunds/{refundId}/transactions/{transactionId}/sync',
-			params: ['orderId', 'refundId', 'transactionId'],
-			withoutPayload: true
-		};
-	};
-
-	Order._update = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'update',
+			methodName: 'updateRefundCancellationForMe',
 			httpMethod: 'PUT',
-			path: '/v1/orders/{orderId}',
+			path: '/v1/me/orders/{orderId}/refunds/{refundId}/cancellation',
+			params: ['orderId', 'refundId']
+		};
+	};
+
+	Order._markAsNotArrivedForMe = function () {
+
+		return {
+			modelName: Order.name,
+			methodName: 'markAsNotArrivedForMe',
+			httpMethod: 'DELETE',
+			path: '/v1/me/orders/{orderId}/arrived',
 			params: ['orderId']
-		};
-	};
-
-	Order._updateFulfillment = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'updateFulfillment',
-			httpMethod: 'PUT',
-			path: '/v1/orders/{orderId}/fulfillments/{fulfillmentId}',
-			params: ['orderId', 'fulfillmentId']
-		};
-	};
-
-	Order._updateItem = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'updateItem',
-			httpMethod: 'PUT',
-			path: '/v1/orders/{orderId}/items/{itemId}',
-			params: ['orderId', 'itemId']
-		};
-	};
-
-	Order._updatePaymentTransaction = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'updatePaymentTransaction',
-			httpMethod: 'PUT',
-			path: '/v1/orders/{orderId}/transactions/{transactionId}',
-			params: ['orderId', 'transactionId']
-		};
-	};
-
-	Order._updateRefund = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'updateRefund',
-			httpMethod: 'PUT',
-			path: '/v1/orders/{orderId}/refunds/{refundId}',
-			params: ['orderId', 'refundId']
-		};
-	};
-
-	Order._updateRefundTransaction = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'updateRefundTransaction',
-			httpMethod: 'PUT',
-			path: '/v1/orders/{orderId}/refunds/{refundId}/transactions/{transactionId}',
-			params: ['orderId', 'refundId', 'transactionId']
-		};
-	};
-
-	Order._delete = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'delete',
-			httpMethod: 'DELETE',
-			path: '/v1/orders/{orderId}',
-			params: ['orderId']
-		};
-	};
-
-	Order._deletePaymentTransaction = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'deletePaymentTransaction',
-			httpMethod: 'DELETE',
-			path: '/v1/orders/{orderId}/transactions/{transactionId}',
-			params: ['orderId', 'transactionId']
-		};
-	};
-
-	Order._deleteRefund = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'deleteRefund',
-			httpMethod: 'DELETE',
-			path: '/v1/orders/{orderId}/refunds/{refundId}',
-			params: ['orderId', 'refundId']
-		};
-	};
-
-	Order._deleteFulfillment = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'deleteFulfillment',
-			httpMethod: 'DELETE',
-			path: '/v1/orders/{orderId}/fulfillments/{fulfillmentId}',
-			params: ['orderId', 'fulfillmentId']
-		};
-	};
-
-	Order._deleteSyncOperation = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'deleteSyncOperation',
-			httpMethod: 'DELETE',
-			path: '/v1/orders/{orderId}/sync/operations/{operationId}',
-			params: ['orderId', 'operationId']
-		};
-	};
-
-	Order._deleteRefundTransaction = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'deleteRefundTransaction',
-			httpMethod: 'DELETE',
-			path: '/v1/orders/{orderId}/refunds/{refundId}/transactions/{transactionId}',
-			params: ['orderId', 'refundId', 'transactionId']
 		};
 	};
 
 	return Order;
 };
 
-},{"../util/assign":26}],15:[function(require,module,exports){
+},{"../util/assign":29}],17:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1898,9 +1625,6 @@ module.exports = function (request) {
 	var OrderTag = {
 		name: 'OrderTag',
 		path: 'orders/tags',
-		query: function query() {
-			return request(assign(OrderTag._query(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		list: function list() {
 			return request(assign(OrderTag._list(), { args: Array.prototype.slice.call(arguments) }));
 		},
@@ -1910,17 +1634,6 @@ module.exports = function (request) {
 		get: function get() {
 			return request(assign(OrderTag._get(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	OrderTag._query = function () {
-
-		return {
-			modelName: OrderTag.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/orders/tags',
-			params: []
-		};
 	};
 
 	OrderTag._list = function () {
@@ -1959,7 +1672,7 @@ module.exports = function (request) {
 	return OrderTag;
 };
 
-},{"../util/assign":26}],16:[function(require,module,exports){
+},{"../util/assign":29}],18:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1969,9 +1682,6 @@ module.exports = function (request) {
 	var PaymentMethod = {
 		name: 'PaymentMethod',
 		path: 'payments/methods',
-		query: function query() {
-			return request(assign(PaymentMethod._query(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		list: function list() {
 			return request(assign(PaymentMethod._list(), { args: Array.prototype.slice.call(arguments) }));
 		},
@@ -1981,17 +1691,6 @@ module.exports = function (request) {
 		get: function get() {
 			return request(assign(PaymentMethod._get(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	PaymentMethod._query = function () {
-
-		return {
-			modelName: PaymentMethod.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/payments/methods',
-			params: []
-		};
 	};
 
 	PaymentMethod._list = function () {
@@ -2030,7 +1729,7 @@ module.exports = function (request) {
 	return PaymentMethod;
 };
 
-},{"../util/assign":26}],17:[function(require,module,exports){
+},{"../util/assign":29}],19:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2040,9 +1739,6 @@ module.exports = function (request) {
 	var Product = {
 		name: 'Product',
 		path: 'products',
-		query: function query() {
-			return request(assign(Product._query(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		list: function list() {
 			return request(assign(Product._list(), { args: Array.prototype.slice.call(arguments) }));
 		},
@@ -2051,30 +1747,7 @@ module.exports = function (request) {
 		},
 		get: function get() {
 			return request(assign(Product._get(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		queryByBrand: function queryByBrand() {
-			return request(assign(Product._queryByBrand(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		listByBrand: function listByBrand() {
-			return request(assign(Product._listByBrand(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		queryByCollection: function queryByCollection() {
-			return request(assign(Product._queryByCollection(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		listByCollection: function listByCollection() {
-			return request(assign(Product._listByCollection(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Product._query = function () {
-
-		return {
-			modelName: Product.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/products',
-			params: []
-		};
 	};
 
 	Product._list = function () {
@@ -2110,54 +1783,10 @@ module.exports = function (request) {
 		};
 	};
 
-	Product._queryByBrand = function () {
-
-		return {
-			modelName: Product.name,
-			methodName: 'queryByBrand',
-			httpMethod: 'GET',
-			path: '/v1/brands/{brandId}/products',
-			params: ['brandId']
-		};
-	};
-
-	Product._listByBrand = function () {
-
-		return {
-			modelName: Product.name,
-			methodName: 'listByBrand',
-			httpMethod: 'GET',
-			path: '/v1/brands/{brandId}/products',
-			params: ['brandId']
-		};
-	};
-
-	Product._queryByCollection = function () {
-
-		return {
-			modelName: Product.name,
-			methodName: 'queryByCollection',
-			httpMethod: 'GET',
-			path: '/v1/collections/{collectionId}/products',
-			params: ['collectionId']
-		};
-	};
-
-	Product._listByCollection = function () {
-
-		return {
-			modelName: Product.name,
-			methodName: 'listByCollection',
-			httpMethod: 'GET',
-			path: '/v1/collections/{collectionId}/products',
-			params: ['collectionId']
-		};
-	};
-
 	return Product;
 };
 
-},{"../util/assign":26}],18:[function(require,module,exports){
+},{"../util/assign":29}],20:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2167,181 +1796,99 @@ module.exports = function (request) {
 	var Review = {
 		name: 'Review',
 		path: 'products/reviews',
-		query: function query() {
-			return request(assign(Review._query(), { args: Array.prototype.slice.call(arguments) }));
+		listPublished: function listPublished() {
+			return request(assign(Review._listPublished(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		list: function list() {
-			return request(assign(Review._list(), { args: Array.prototype.slice.call(arguments) }));
+		countPublished: function countPublished() {
+			return request(assign(Review._countPublished(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		count: function count() {
-			return request(assign(Review._count(), { args: Array.prototype.slice.call(arguments) }));
+		getPublished: function getPublished() {
+			return request(assign(Review._getPublished(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		get: function get() {
-			return request(assign(Review._get(), { args: Array.prototype.slice.call(arguments) }));
+		createForMe: function createForMe() {
+			return request(assign(Review._createForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		queryByProduct: function queryByProduct() {
-			return request(assign(Review._queryByProduct(), { args: Array.prototype.slice.call(arguments) }));
+		flagForMe: function flagForMe() {
+			return request(assign(Review._flagForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		listByProduct: function listByProduct() {
-			return request(assign(Review._listByProduct(), { args: Array.prototype.slice.call(arguments) }));
+		helpedForMe: function helpedForMe() {
+			return request(assign(Review._helpedForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		queryByCustomer: function queryByCustomer() {
-			return request(assign(Review._queryByCustomer(), { args: Array.prototype.slice.call(arguments) }));
+		updateForMe: function updateForMe() {
+			return request(assign(Review._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		listByCustomer: function listByCustomer() {
-			return request(assign(Review._listByCustomer(), { args: Array.prototype.slice.call(arguments) }));
+		deleteForMe: function deleteForMe() {
+			return request(assign(Review._deleteForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		createAsMe: function createAsMe() {
-			return request(assign(Review._createAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		cancelFlagForMe: function cancelFlagForMe() {
+			return request(assign(Review._cancelFlagForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		flagAsMe: function flagAsMe() {
-			return request(assign(Review._flagAsMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		cancelFlagAsMe: function cancelFlagAsMe() {
-			return request(assign(Review._cancelFlagAsMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		helpedAsMe: function helpedAsMe() {
-			return request(assign(Review._helpedAsMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		cancelHelpedAsMe: function cancelHelpedAsMe() {
-			return request(assign(Review._cancelHelpedAsMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		updateAsMe: function updateAsMe() {
-			return request(assign(Review._updateAsMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		deleteAsMe: function deleteAsMe() {
-			return request(assign(Review._deleteAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		cancelHelpedForMe: function cancelHelpedForMe() {
+			return request(assign(Review._cancelHelpedForMe(), { args: Array.prototype.slice.call(arguments) }));
 		}
 	};
 
-	Review._query = function () {
+	Review._listPublished = function () {
 
 		return {
 			modelName: Review.name,
-			methodName: 'query',
+			methodName: 'listPublished',
 			httpMethod: 'GET',
-			path: '/v1/products/reviews',
+			path: '/v1/products/reviews/published',
 			params: []
 		};
 	};
 
-	Review._list = function () {
+	Review._countPublished = function () {
 
 		return {
 			modelName: Review.name,
-			methodName: 'list',
+			methodName: 'countPublished',
 			httpMethod: 'GET',
-			path: '/v1/products/reviews',
+			path: '/v1/products/reviews/published/count',
 			params: []
 		};
 	};
 
-	Review._count = function () {
+	Review._getPublished = function () {
 
 		return {
 			modelName: Review.name,
-			methodName: 'count',
+			methodName: 'getPublished',
 			httpMethod: 'GET',
-			path: '/v1/products/reviews/count',
-			params: []
-		};
-	};
-
-	Review._get = function () {
-
-		return {
-			modelName: Review.name,
-			methodName: 'get',
-			httpMethod: 'GET',
-			path: '/v1/products/reviews/{reviewId}',
+			path: '/v1/products/reviews/published/{reviewId}',
 			params: ['reviewId']
 		};
 	};
 
-	Review._queryByProduct = function () {
+	Review._createForMe = function () {
 
 		return {
 			modelName: Review.name,
-			methodName: 'queryByProduct',
-			httpMethod: 'GET',
-			path: '/v1/products/{productId}/reviews',
-			params: ['productId']
-		};
-	};
-
-	Review._listByProduct = function () {
-
-		return {
-			modelName: Review.name,
-			methodName: 'listByProduct',
-			httpMethod: 'GET',
-			path: '/v1/products/{productId}/reviews',
-			params: ['productId']
-		};
-	};
-
-	Review._queryByCustomer = function () {
-
-		return {
-			modelName: Review.name,
-			methodName: 'queryByCustomer',
-			httpMethod: 'GET',
-			path: '/v1/customers/{customerId}/products/reviews',
-			params: ['customerId']
-		};
-	};
-
-	Review._listByCustomer = function () {
-
-		return {
-			modelName: Review.name,
-			methodName: 'listByCustomer',
-			httpMethod: 'GET',
-			path: '/v1/customers/{customerId}/products/reviews',
-			params: ['customerId']
-		};
-	};
-
-	Review._createAsMe = function () {
-
-		return {
-			modelName: Review.name,
-			methodName: 'createAsMe',
+			methodName: 'createForMe',
 			httpMethod: 'POST',
 			path: '/v1/me/products/reviews',
 			params: []
 		};
 	};
 
-	Review._flagAsMe = function () {
+	Review._flagForMe = function () {
 
 		return {
 			modelName: Review.name,
-			methodName: 'flagAsMe',
+			methodName: 'flagForMe',
 			httpMethod: 'POST',
-			path: '/v1/me/products/reviews/{reviewId}/flag',
+			path: '/v1/me/products/reviews/{reviewId}/flags',
 			params: ['reviewId'],
 			withoutPayload: true
 		};
 	};
 
-	Review._cancelFlagAsMe = function () {
+	Review._helpedForMe = function () {
 
 		return {
 			modelName: Review.name,
-			methodName: 'cancelFlagAsMe',
-			httpMethod: 'POST',
-			path: '/v1/me/products/reviews/{reviewId}/flag/cancel',
-			params: ['reviewId'],
-			withoutPayload: true
-		};
-	};
-
-	Review._helpedAsMe = function () {
-
-		return {
-			modelName: Review.name,
-			methodName: 'helpedAsMe',
+			methodName: 'helpedForMe',
 			httpMethod: 'POST',
 			path: '/v1/me/products/reviews/{reviewId}/helped/{upDown}',
 			params: ['reviewId', 'upDown'],
@@ -2349,44 +1896,54 @@ module.exports = function (request) {
 		};
 	};
 
-	Review._cancelHelpedAsMe = function () {
+	Review._updateForMe = function () {
 
 		return {
 			modelName: Review.name,
-			methodName: 'cancelHelpedAsMe',
-			httpMethod: 'POST',
-			path: '/v1/me/products/reviews/{reviewId}/helped/{upDown}/cancel',
-			params: ['reviewId', 'upDown'],
-			withoutPayload: true
-		};
-	};
-
-	Review._updateAsMe = function () {
-
-		return {
-			modelName: Review.name,
-			methodName: 'updateAsMe',
+			methodName: 'updateForMe',
 			httpMethod: 'PUT',
 			path: '/v1/me/products/reviews/{reviewId}',
 			params: ['reviewId']
 		};
 	};
 
-	Review._deleteAsMe = function () {
+	Review._deleteForMe = function () {
 
 		return {
 			modelName: Review.name,
-			methodName: 'deleteAsMe',
+			methodName: 'deleteForMe',
 			httpMethod: 'DELETE',
 			path: '/v1/me/products/reviews/{reviewId}',
 			params: ['reviewId']
 		};
 	};
 
+	Review._cancelFlagForMe = function () {
+
+		return {
+			modelName: Review.name,
+			methodName: 'cancelFlagForMe',
+			httpMethod: 'DELETE',
+			path: '/v1/me/products/reviews/{reviewId}/flags',
+			params: ['reviewId']
+		};
+	};
+
+	Review._cancelHelpedForMe = function () {
+
+		return {
+			modelName: Review.name,
+			methodName: 'cancelHelpedForMe',
+			httpMethod: 'DELETE',
+			path: '/v1/me/products/reviews/{reviewId}/helped/{upDown}',
+			params: ['reviewId', 'upDown']
+		};
+	};
+
 	return Review;
 };
 
-},{"../util/assign":26}],19:[function(require,module,exports){
+},{"../util/assign":29}],21:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2396,9 +1953,6 @@ module.exports = function (request) {
 	var ReviewComment = {
 		name: 'ReviewComment',
 		path: 'products/reviews/comments',
-		query: function query() {
-			return request(assign(ReviewComment._query(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		list: function list() {
 			return request(assign(ReviewComment._list(), { args: Array.prototype.slice.call(arguments) }));
 		},
@@ -2408,44 +1962,21 @@ module.exports = function (request) {
 		get: function get() {
 			return request(assign(ReviewComment._get(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		queryByReview: function queryByReview() {
-			return request(assign(ReviewComment._queryByReview(), { args: Array.prototype.slice.call(arguments) }));
+		createForMe: function createForMe() {
+			return request(assign(ReviewComment._createForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		listByReview: function listByReview() {
-			return request(assign(ReviewComment._listByReview(), { args: Array.prototype.slice.call(arguments) }));
+		flagForMe: function flagForMe() {
+			return request(assign(ReviewComment._flagForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		queryByAuthor: function queryByAuthor() {
-			return request(assign(ReviewComment._queryByAuthor(), { args: Array.prototype.slice.call(arguments) }));
+		updateForMe: function updateForMe() {
+			return request(assign(ReviewComment._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		listByAuthor: function listByAuthor() {
-			return request(assign(ReviewComment._listByAuthor(), { args: Array.prototype.slice.call(arguments) }));
+		deleteForMe: function deleteForMe() {
+			return request(assign(ReviewComment._deleteForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		createAsMe: function createAsMe() {
-			return request(assign(ReviewComment._createAsMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		flagAsMe: function flagAsMe() {
-			return request(assign(ReviewComment._flagAsMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		cancelFlagAsMe: function cancelFlagAsMe() {
-			return request(assign(ReviewComment._cancelFlagAsMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		updateAsMe: function updateAsMe() {
-			return request(assign(ReviewComment._updateAsMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		deleteAsMe: function deleteAsMe() {
-			return request(assign(ReviewComment._deleteAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		cancelFlagForMe: function cancelFlagForMe() {
+			return request(assign(ReviewComment._cancelFlagForMe(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	ReviewComment._query = function () {
-
-		return {
-			modelName: ReviewComment.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/products/reviews/comments',
-			params: []
-		};
 	};
 
 	ReviewComment._list = function () {
@@ -2481,103 +2012,58 @@ module.exports = function (request) {
 		};
 	};
 
-	ReviewComment._queryByReview = function () {
+	ReviewComment._createForMe = function () {
 
 		return {
 			modelName: ReviewComment.name,
-			methodName: 'queryByReview',
-			httpMethod: 'GET',
-			path: '/v1/products/reviews/{reviewId}/comments',
-			params: ['reviewId']
-		};
-	};
-
-	ReviewComment._listByReview = function () {
-
-		return {
-			modelName: ReviewComment.name,
-			methodName: 'listByReview',
-			httpMethod: 'GET',
-			path: '/v1/products/reviews/{reviewId}/comments',
-			params: ['reviewId']
-		};
-	};
-
-	ReviewComment._queryByAuthor = function () {
-
-		return {
-			modelName: ReviewComment.name,
-			methodName: 'queryByAuthor',
-			httpMethod: 'GET',
-			path: '/v1/{authorModel}/{authorId}/products/reviews/comments',
-			params: ['authorModel', 'authorId']
-		};
-	};
-
-	ReviewComment._listByAuthor = function () {
-
-		return {
-			modelName: ReviewComment.name,
-			methodName: 'listByAuthor',
-			httpMethod: 'GET',
-			path: '/v1/{authorModel}/{authorId}/products/reviews/comments',
-			params: ['authorModel', 'authorId']
-		};
-	};
-
-	ReviewComment._createAsMe = function () {
-
-		return {
-			modelName: ReviewComment.name,
-			methodName: 'createAsMe',
+			methodName: 'createForMe',
 			httpMethod: 'POST',
 			path: '/v1/me/products/reviews/comments',
 			params: []
 		};
 	};
 
-	ReviewComment._flagAsMe = function () {
+	ReviewComment._flagForMe = function () {
 
 		return {
 			modelName: ReviewComment.name,
-			methodName: 'flagAsMe',
+			methodName: 'flagForMe',
 			httpMethod: 'POST',
-			path: '/v1/me/products/reviews/comments/{reviewCommentId}/flag',
+			path: '/v1/me/products/reviews/comments/{reviewCommentId}/flags',
 			params: ['reviewCommentId'],
 			withoutPayload: true
 		};
 	};
 
-	ReviewComment._cancelFlagAsMe = function () {
+	ReviewComment._updateForMe = function () {
 
 		return {
 			modelName: ReviewComment.name,
-			methodName: 'cancelFlagAsMe',
-			httpMethod: 'POST',
-			path: '/v1/me/products/reviews/comments/{reviewCommentId}/flag/cancel',
-			params: ['reviewCommentId'],
-			withoutPayload: true
-		};
-	};
-
-	ReviewComment._updateAsMe = function () {
-
-		return {
-			modelName: ReviewComment.name,
-			methodName: 'updateAsMe',
+			methodName: 'updateForMe',
 			httpMethod: 'PUT',
 			path: '/v1/me/products/reviews/comments/{reviewCommentId}',
 			params: ['reviewCommentId']
 		};
 	};
 
-	ReviewComment._deleteAsMe = function () {
+	ReviewComment._deleteForMe = function () {
 
 		return {
 			modelName: ReviewComment.name,
-			methodName: 'deleteAsMe',
+			methodName: 'deleteForMe',
 			httpMethod: 'DELETE',
 			path: '/v1/me/products/reviews/comments/{reviewCommentId}',
+			params: ['reviewCommentId']
+		};
+	};
+
+	ReviewComment._cancelFlagForMe = function () {
+
+		return {
+			modelName: ReviewComment.name,
+			methodName: 'cancelFlagForMe',
+			httpMethod: 'DELETE',
+			path: '/v1/me/products/reviews/comments/{reviewCommentId}/flags',
 			params: ['reviewCommentId']
 		};
 	};
@@ -2585,7 +2071,7 @@ module.exports = function (request) {
 	return ReviewComment;
 };
 
-},{"../util/assign":26}],20:[function(require,module,exports){
+},{"../util/assign":29}],22:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2595,9 +2081,6 @@ module.exports = function (request) {
 	var ShippingMethod = {
 		name: 'ShippingMethod',
 		path: 'shipping/methods',
-		query: function query() {
-			return request(assign(ShippingMethod._query(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		list: function list() {
 			return request(assign(ShippingMethod._list(), { args: Array.prototype.slice.call(arguments) }));
 		},
@@ -2607,17 +2090,6 @@ module.exports = function (request) {
 		get: function get() {
 			return request(assign(ShippingMethod._get(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	ShippingMethod._query = function () {
-
-		return {
-			modelName: ShippingMethod.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/shipping/methods',
-			params: []
-		};
 	};
 
 	ShippingMethod._list = function () {
@@ -2656,7 +2128,7 @@ module.exports = function (request) {
 	return ShippingMethod;
 };
 
-},{"../util/assign":26}],21:[function(require,module,exports){
+},{"../util/assign":29}],23:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2685,7 +2157,7 @@ module.exports = function (request) {
 	return Store;
 };
 
-},{"../util/assign":26}],22:[function(require,module,exports){
+},{"../util/assign":29}],24:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2694,146 +2166,103 @@ module.exports = function (request) {
 
 	var Subscription = {
 		name: 'Subscription',
-		path: '',
-		query: function query() {
-			return request(assign(Subscription._query(), { args: Array.prototype.slice.call(arguments) }));
+		path: 'subscriptions',
+		listForMe: function listForMe() {
+			return request(assign(Subscription._listForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		list: function list() {
-			return request(assign(Subscription._list(), { args: Array.prototype.slice.call(arguments) }));
+		countForMe: function countForMe() {
+			return request(assign(Subscription._countForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		count: function count() {
-			return request(assign(Subscription._count(), { args: Array.prototype.slice.call(arguments) }));
+		getForMe: function getForMe() {
+			return request(assign(Subscription._getForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		get: function get() {
-			return request(assign(Subscription._get(), { args: Array.prototype.slice.call(arguments) }));
+		authenticate: function authenticate() {
+			return request(assign(Subscription._authenticate(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		queryByCustomer: function queryByCustomer() {
-			return request(assign(Subscription._queryByCustomer(), { args: Array.prototype.slice.call(arguments) }));
+		cancelForMe: function cancelForMe() {
+			return request(assign(Subscription._cancelForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		listByCustomer: function listByCustomer() {
-			return request(assign(Subscription._listByCustomer(), { args: Array.prototype.slice.call(arguments) }));
+		scheduleForMe: function scheduleForMe() {
+			return request(assign(Subscription._scheduleForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		reject: function reject() {
-			return request(assign(Subscription._reject(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		cancel: function cancel() {
-			return request(assign(Subscription._cancel(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		start: function start() {
-			return request(assign(Subscription._start(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		delete: function _delete() {
-			return request(assign(Subscription._delete(), { args: Array.prototype.slice.call(arguments) }));
+		updateCancellationForMe: function updateCancellationForMe() {
+			return request(assign(Subscription._updateCancellationForMe(), { args: Array.prototype.slice.call(arguments) }));
 		}
 	};
 
-	Subscription._query = function () {
+	Subscription._listForMe = function () {
 
 		return {
 			modelName: Subscription.name,
-			methodName: 'query',
+			methodName: 'listForMe',
 			httpMethod: 'GET',
-			path: '/v1/subscriptions',
+			path: '/v1/me/subscriptions',
 			params: []
 		};
 	};
 
-	Subscription._list = function () {
+	Subscription._countForMe = function () {
 
 		return {
 			modelName: Subscription.name,
-			methodName: 'list',
+			methodName: 'countForMe',
 			httpMethod: 'GET',
-			path: '/v1/subscriptions',
+			path: '/v1/me/subscriptions/count',
 			params: []
 		};
 	};
 
-	Subscription._count = function () {
+	Subscription._getForMe = function () {
 
 		return {
 			modelName: Subscription.name,
-			methodName: 'count',
+			methodName: 'getForMe',
 			httpMethod: 'GET',
-			path: '/v1/subscriptions/count',
-			params: []
-		};
-	};
-
-	Subscription._get = function () {
-
-		return {
-			modelName: Subscription.name,
-			methodName: 'get',
-			httpMethod: 'GET',
-			path: '/v1/subscriptions/{subscriptionId}',
+			path: '/v1/me/subscriptions/{subscriptionId}',
 			params: ['subscriptionId']
 		};
 	};
 
-	Subscription._queryByCustomer = function () {
+	Subscription._authenticate = function () {
 
 		return {
 			modelName: Subscription.name,
-			methodName: 'queryByCustomer',
-			httpMethod: 'GET',
-			path: '/v1/customers/{customerId}/subscriptions',
-			params: ['customerId']
-		};
-	};
-
-	Subscription._listByCustomer = function () {
-
-		return {
-			modelName: Subscription.name,
-			methodName: 'listByCustomer',
-			httpMethod: 'GET',
-			path: '/v1/customers/{customerId}/subscriptions',
-			params: ['customerId']
-		};
-	};
-
-	Subscription._reject = function () {
-
-		return {
-			modelName: Subscription.name,
-			methodName: 'reject',
+			methodName: 'authenticate',
 			httpMethod: 'POST',
-			path: '/v1/subscriptions/{subscriptionId}/reject',
+			path: '/v1/subscriptions/{subscriptionId}/auth',
 			params: ['subscriptionId']
 		};
 	};
 
-	Subscription._cancel = function () {
+	Subscription._cancelForMe = function () {
 
 		return {
 			modelName: Subscription.name,
-			methodName: 'cancel',
+			methodName: 'cancelForMe',
 			httpMethod: 'POST',
-			path: '/v1/subscriptions/{subscriptionId}/cancel',
+			path: '/v1/me/subscriptions/{subscriptionId}/cancellation',
 			params: ['subscriptionId']
 		};
 	};
 
-	Subscription._start = function () {
+	Subscription._scheduleForMe = function () {
 
 		return {
 			modelName: Subscription.name,
-			methodName: 'start',
+			methodName: 'scheduleForMe',
 			httpMethod: 'POST',
-			path: '/v1/subscriptions/{subscriptionId}/start',
-			params: ['subscriptionId'],
-			withoutPayload: true
+			path: '/v1/me/subscriptions/{subscriptionId}/scheduled',
+			params: ['subscriptionId']
 		};
 	};
 
-	Subscription._delete = function () {
+	Subscription._updateCancellationForMe = function () {
 
 		return {
 			modelName: Subscription.name,
-			methodName: 'delete',
-			httpMethod: 'DELETE',
-			path: '/v1/subscriptions/{subscriptionId}',
+			methodName: 'updateCancellationForMe',
+			httpMethod: 'PUT',
+			path: '/v1/me/subscriptions/{subscriptionId}/cancellation',
 			params: ['subscriptionId']
 		};
 	};
@@ -2841,7 +2270,64 @@ module.exports = function (request) {
 	return Subscription;
 };
 
-},{"../util/assign":26}],23:[function(require,module,exports){
+},{"../util/assign":29}],25:[function(require,module,exports){
+'use strict';
+
+var assign = require('../util/assign');
+
+module.exports = function (request) {
+
+	var SubscriptionPlan = {
+		name: 'SubscriptionPlan',
+		path: 'subscriptions/plans',
+		list: function list() {
+			return request(assign(SubscriptionPlan._list(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		count: function count() {
+			return request(assign(SubscriptionPlan._count(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		get: function get() {
+			return request(assign(SubscriptionPlan._get(), { args: Array.prototype.slice.call(arguments) }));
+		}
+	};
+
+	SubscriptionPlan._list = function () {
+
+		return {
+			modelName: SubscriptionPlan.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/subscriptions/plans',
+			params: []
+		};
+	};
+
+	SubscriptionPlan._count = function () {
+
+		return {
+			modelName: SubscriptionPlan.name,
+			methodName: 'count',
+			httpMethod: 'GET',
+			path: '/v1/subscriptions/plans/count',
+			params: []
+		};
+	};
+
+	SubscriptionPlan._get = function () {
+
+		return {
+			modelName: SubscriptionPlan.name,
+			methodName: 'get',
+			httpMethod: 'GET',
+			path: '/v1/subscriptions/plans/{subscriptionPlanId}',
+			params: ['subscriptionPlanId']
+		};
+	};
+
+	return SubscriptionPlan;
+};
+
+},{"../util/assign":29}],26:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2851,9 +2337,6 @@ module.exports = function (request) {
 	var TaxCategory = {
 		name: 'TaxCategory',
 		path: 'taxes/categories',
-		query: function query() {
-			return request(assign(TaxCategory._query(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		list: function list() {
 			return request(assign(TaxCategory._list(), { args: Array.prototype.slice.call(arguments) }));
 		},
@@ -2863,17 +2346,6 @@ module.exports = function (request) {
 		get: function get() {
 			return request(assign(TaxCategory._get(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	TaxCategory._query = function () {
-
-		return {
-			modelName: TaxCategory.name,
-			methodName: 'query',
-			httpMethod: 'GET',
-			path: '/v1/taxes/categories',
-			params: []
-		};
 	};
 
 	TaxCategory._list = function () {
@@ -2912,78 +2384,137 @@ module.exports = function (request) {
 	return TaxCategory;
 };
 
-},{"../util/assign":26}],24:[function(require,module,exports){
+},{"../util/assign":29}],27:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
 
 module.exports = function (request) {
 
-	var Warehouse = {
-		name: 'Warehouse',
-		path: 'warehouses',
-		query: function query() {
-			return request(assign(Warehouse._query(), { args: Array.prototype.slice.call(arguments) }));
+	var Tracker = {
+		name: 'Tracker',
+		path: '',
+		getByCustomerForMe: function getByCustomerForMe() {
+			return request(assign(Tracker._getByCustomerForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		list: function list() {
-			return request(assign(Warehouse._list(), { args: Array.prototype.slice.call(arguments) }));
+		getForMe: function getForMe() {
+			return request(assign(Tracker._getForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		count: function count() {
-			return request(assign(Warehouse._count(), { args: Array.prototype.slice.call(arguments) }));
+		getAsNonRegisteredForMe: function getAsNonRegisteredForMe() {
+			return request(assign(Tracker._getAsNonRegisteredForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		get: function get() {
-			return request(assign(Warehouse._get(), { args: Array.prototype.slice.call(arguments) }));
+		createForMe: function createForMe() {
+			return request(assign(Tracker._createForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		createAsNonRegisteredForMe: function createAsNonRegisteredForMe() {
+			return request(assign(Tracker._createAsNonRegisteredForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		changeOwnerForMe: function changeOwnerForMe() {
+			return request(assign(Tracker._changeOwnerForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		deleteForMe: function deleteForMe() {
+			return request(assign(Tracker._deleteForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		deleteAsNonRegisteredForMe: function deleteAsNonRegisteredForMe() {
+			return request(assign(Tracker._deleteAsNonRegisteredForMe(), { args: Array.prototype.slice.call(arguments) }));
 		}
 	};
 
-	Warehouse._query = function () {
+	Tracker._getByCustomerForMe = function () {
 
 		return {
-			modelName: Warehouse.name,
-			methodName: 'query',
+			modelName: Tracker.name,
+			methodName: 'getByCustomerForMe',
 			httpMethod: 'GET',
-			path: '/v1/warehouses',
+			path: '/v1/me/tracker',
 			params: []
 		};
 	};
 
-	Warehouse._list = function () {
+	Tracker._getForMe = function () {
 
 		return {
-			modelName: Warehouse.name,
-			methodName: 'list',
+			modelName: Tracker.name,
+			methodName: 'getForMe',
 			httpMethod: 'GET',
-			path: '/v1/warehouses',
-			params: []
+			path: '/v1/me/trackers/{trackerId}',
+			params: ['trackerId']
 		};
 	};
 
-	Warehouse._count = function () {
+	Tracker._getAsNonRegisteredForMe = function () {
 
 		return {
-			modelName: Warehouse.name,
-			methodName: 'count',
+			modelName: Tracker.name,
+			methodName: 'getAsNonRegisteredForMe',
 			httpMethod: 'GET',
-			path: '/v1/warehouses/count',
-			params: []
+			path: '/v1/me/non-registered/trackers/{trackerId}',
+			params: ['trackerId']
 		};
 	};
 
-	Warehouse._get = function () {
+	Tracker._createForMe = function () {
 
 		return {
-			modelName: Warehouse.name,
-			methodName: 'get',
-			httpMethod: 'GET',
-			path: '/v1/warehouses/{warehouseId}',
-			params: ['warehouseId']
+			modelName: Tracker.name,
+			methodName: 'createForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/trackers',
+			params: [],
+			withoutPayload: true
 		};
 	};
 
-	return Warehouse;
+	Tracker._createAsNonRegisteredForMe = function () {
+
+		return {
+			modelName: Tracker.name,
+			methodName: 'createAsNonRegisteredForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/non-registered/trackers',
+			params: [],
+			withoutPayload: true
+		};
+	};
+
+	Tracker._changeOwnerForMe = function () {
+
+		return {
+			modelName: Tracker.name,
+			methodName: 'changeOwnerForMe',
+			httpMethod: 'PUT',
+			path: '/v1/me/trackers/{trackerId}/customer',
+			params: ['trackerId'],
+			withoutPayload: true
+		};
+	};
+
+	Tracker._deleteForMe = function () {
+
+		return {
+			modelName: Tracker.name,
+			methodName: 'deleteForMe',
+			httpMethod: 'DELETE',
+			path: '/v1/me/trackers/{trackerId}',
+			params: ['trackerId']
+		};
+	};
+
+	Tracker._deleteAsNonRegisteredForMe = function () {
+
+		return {
+			modelName: Tracker.name,
+			methodName: 'deleteAsNonRegisteredForMe',
+			httpMethod: 'DELETE',
+			path: '/v1/me/non-registered/trackers/{trackerId}',
+			params: ['trackerId']
+		};
+	};
+
+	return Tracker;
 };
 
-},{"../util/assign":26}],25:[function(require,module,exports){
+},{"../util/assign":29}],28:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2993,184 +2524,156 @@ module.exports = function (request) {
 	var WishList = {
 		name: 'WishList',
 		path: 'wishlists',
-		queryAsMe: function queryAsMe() {
-			return request(assign(WishList._queryAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		listForMe: function listForMe() {
+			return request(assign(WishList._listForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		listAsMe: function listAsMe() {
-			return request(assign(WishList._listAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		countForMe: function countForMe() {
+			return request(assign(WishList._countForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		countAsMe: function countAsMe() {
-			return request(assign(WishList._countAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		getForMe: function getForMe() {
+			return request(assign(WishList._getForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		getAsMe: function getAsMe() {
-			return request(assign(WishList._getAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		listProductsForMe: function listProductsForMe() {
+			return request(assign(WishList._listProductsForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		queryProductsAsMe: function queryProductsAsMe() {
-			return request(assign(WishList._queryProductsAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		countProductsForMe: function countProductsForMe() {
+			return request(assign(WishList._countProductsForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		listProductsAsMe: function listProductsAsMe() {
-			return request(assign(WishList._listProductsAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		createForMe: function createForMe() {
+			return request(assign(WishList._createForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		countProductsAsMe: function countProductsAsMe() {
-			return request(assign(WishList._countProductsAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		addItemForMe: function addItemForMe() {
+			return request(assign(WishList._addItemForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		createAsMe: function createAsMe() {
-			return request(assign(WishList._createAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		updateForMe: function updateForMe() {
+			return request(assign(WishList._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		addItemAsMe: function addItemAsMe() {
-			return request(assign(WishList._addItemAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		deleteForMe: function deleteForMe() {
+			return request(assign(WishList._deleteForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		updateAsMe: function updateAsMe() {
-			return request(assign(WishList._updateAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		emptyForMe: function emptyForMe() {
+			return request(assign(WishList._emptyForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		deleteAsMe: function deleteAsMe() {
-			return request(assign(WishList._deleteAsMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		emptyAsMe: function emptyAsMe() {
-			return request(assign(WishList._emptyAsMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		deleteItemAsMe: function deleteItemAsMe() {
-			return request(assign(WishList._deleteItemAsMe(), { args: Array.prototype.slice.call(arguments) }));
+		deleteItemForMe: function deleteItemForMe() {
+			return request(assign(WishList._deleteItemForMe(), { args: Array.prototype.slice.call(arguments) }));
 		}
 	};
 
-	WishList._queryAsMe = function () {
+	WishList._listForMe = function () {
 
 		return {
 			modelName: WishList.name,
-			methodName: 'queryAsMe',
+			methodName: 'listForMe',
 			httpMethod: 'GET',
 			path: '/v1/me/wishlists',
 			params: []
 		};
 	};
 
-	WishList._listAsMe = function () {
+	WishList._countForMe = function () {
 
 		return {
 			modelName: WishList.name,
-			methodName: 'listAsMe',
-			httpMethod: 'GET',
-			path: '/v1/me/wishlists',
-			params: []
-		};
-	};
-
-	WishList._countAsMe = function () {
-
-		return {
-			modelName: WishList.name,
-			methodName: 'countAsMe',
+			methodName: 'countForMe',
 			httpMethod: 'GET',
 			path: '/v1/me/wishlists/count',
 			params: []
 		};
 	};
 
-	WishList._getAsMe = function () {
+	WishList._getForMe = function () {
 
 		return {
 			modelName: WishList.name,
-			methodName: 'getAsMe',
+			methodName: 'getForMe',
 			httpMethod: 'GET',
 			path: '/v1/me/wishlists/{wishListId}',
 			params: ['wishListId']
 		};
 	};
 
-	WishList._queryProductsAsMe = function () {
+	WishList._listProductsForMe = function () {
 
 		return {
 			modelName: WishList.name,
-			methodName: 'queryProductsAsMe',
+			methodName: 'listProductsForMe',
 			httpMethod: 'GET',
 			path: '/v1/me/wishlists/{wishListId}/products',
 			params: ['wishListId']
 		};
 	};
 
-	WishList._listProductsAsMe = function () {
+	WishList._countProductsForMe = function () {
 
 		return {
 			modelName: WishList.name,
-			methodName: 'listProductsAsMe',
-			httpMethod: 'GET',
-			path: '/v1/me/wishlists/{wishListId}/products',
-			params: ['wishListId']
-		};
-	};
-
-	WishList._countProductsAsMe = function () {
-
-		return {
-			modelName: WishList.name,
-			methodName: 'countProductsAsMe',
+			methodName: 'countProductsForMe',
 			httpMethod: 'GET',
 			path: '/v1/me/wishlists/{wishListId}/products/count',
 			params: ['wishListId']
 		};
 	};
 
-	WishList._createAsMe = function () {
+	WishList._createForMe = function () {
 
 		return {
 			modelName: WishList.name,
-			methodName: 'createAsMe',
+			methodName: 'createForMe',
 			httpMethod: 'POST',
 			path: '/v1/me/wishlists',
 			params: []
 		};
 	};
 
-	WishList._addItemAsMe = function () {
+	WishList._addItemForMe = function () {
 
 		return {
 			modelName: WishList.name,
-			methodName: 'addItemAsMe',
+			methodName: 'addItemForMe',
 			httpMethod: 'POST',
 			path: '/v1/me/wishlists/{wishListId}/items',
 			params: ['wishListId']
 		};
 	};
 
-	WishList._updateAsMe = function () {
+	WishList._updateForMe = function () {
 
 		return {
 			modelName: WishList.name,
-			methodName: 'updateAsMe',
+			methodName: 'updateForMe',
 			httpMethod: 'PUT',
 			path: '/v1/me/wishlists/{wishListId}',
 			params: ['wishListId']
 		};
 	};
 
-	WishList._deleteAsMe = function () {
+	WishList._deleteForMe = function () {
 
 		return {
 			modelName: WishList.name,
-			methodName: 'deleteAsMe',
+			methodName: 'deleteForMe',
 			httpMethod: 'DELETE',
 			path: '/v1/me/wishlists/{wishListId}',
 			params: ['wishListId']
 		};
 	};
 
-	WishList._emptyAsMe = function () {
+	WishList._emptyForMe = function () {
 
 		return {
 			modelName: WishList.name,
-			methodName: 'emptyAsMe',
+			methodName: 'emptyForMe',
 			httpMethod: 'DELETE',
 			path: '/v1/me/wishlists/{wishListId}/items',
 			params: ['wishListId']
 		};
 	};
 
-	WishList._deleteItemAsMe = function () {
+	WishList._deleteItemForMe = function () {
 
 		return {
 			modelName: WishList.name,
-			methodName: 'deleteItemAsMe',
+			methodName: 'deleteItemForMe',
 			httpMethod: 'DELETE',
 			path: '/v1/me/wishlists/{wishListId}/items/{productId}',
 			params: ['wishListId', 'productId']
@@ -3180,7 +2683,7 @@ module.exports = function (request) {
 	return WishList;
 };
 
-},{"../util/assign":26}],26:[function(require,module,exports){
+},{"../util/assign":29}],29:[function(require,module,exports){
 "use strict";
 
 module.exports = function (dest, source) {
