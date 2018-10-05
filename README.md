@@ -2,6 +2,12 @@
 
 Official JavaScript & Node.js SDK for [clayful.io](http://clayful.io).
 
+## Build
+
+```sh
+gulp
+```
+
 ## Tests
 
 ```sh
