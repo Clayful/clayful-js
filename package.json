@@ -22,6 +22,7 @@
     "boom": "^3.2.2",
     "browserify": "^13.1.1",
     "clayful-lib-spec": "^1.0.0",
+    "cryptiles": "^4.1.2",
     "decache": "^4.1.0",
     "expect.js": "^0.3.1",
     "form-data": "^2.1.2",
