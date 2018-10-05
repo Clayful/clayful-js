@@ -392,6 +392,8 @@ module.exports = Clayful;
 },{"../clayful-error":1,"../util/assign":29}],3:[function(require,module,exports){
 'use strict';
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var Clayful = require('../clayful');
 var models = require('../models-js');
 
@@ -399,7 +401,13 @@ Clayful.defaultHeaders['Clayful-SDK'] = 'clayful-js';
 
 Clayful.setModels(models);
 
-module.exports = window.Clayful = Clayful;
+if ((typeof module === 'undefined' ? 'undefined' : _typeof(module)) === 'object' && module.exports) {
+	module.exports = Clayful;
+}
+
+if ((typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object') {
+	window.Clayful = Clayful;
+}
 
 },{"../clayful":2,"../models-js":15}],4:[function(require,module,exports){
 'use strict';
@@ -1387,14 +1395,11 @@ module.exports = function (request) {
 		cancelForMe: function cancelForMe() {
 			return request(assign(Order._cancelForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		markAsArrivedForMe: function markAsArrivedForMe() {
-			return request(assign(Order._markAsArrivedForMe(), { args: Array.prototype.slice.call(arguments) }));
+		markAsReceivedForMe: function markAsReceivedForMe() {
+			return request(assign(Order._markAsReceivedForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		requestRefundForMe: function requestRefundForMe() {
 			return request(assign(Order._requestRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		requestFullRefundForMe: function requestFullRefundForMe() {
-			return request(assign(Order._requestFullRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		cancelRefundForMe: function cancelRefundForMe() {
 			return request(assign(Order._cancelRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
@@ -1405,11 +1410,11 @@ module.exports = function (request) {
 		updateForMe: function updateForMe() {
 			return request(assign(Order._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		updateTransactionsForMe: function updateTransactionsForMe() {
-			return request(assign(Order._updateTransactionsForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		updateCancellationForMe: function updateCancellationForMe() {
 			return request(assign(Order._updateCancellationForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		updateTransactionsForMe: function updateTransactionsForMe() {
+			return request(assign(Order._updateTransactionsForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		updateRefundForMe: function updateRefundForMe() {
 			return request(assign(Order._updateRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
@@ -1417,8 +1422,8 @@ module.exports = function (request) {
 		updateRefundCancellationForMe: function updateRefundCancellationForMe() {
 			return request(assign(Order._updateRefundCancellationForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		markAsNotArrivedForMe: function markAsNotArrivedForMe() {
-			return request(assign(Order._markAsNotArrivedForMe(), { args: Array.prototype.slice.call(arguments) }));
+		markAsNotReceivedForMe: function markAsNotReceivedForMe() {
+			return request(assign(Order._markAsNotReceivedForMe(), { args: Array.prototype.slice.call(arguments) }));
 		}
 	};
 
@@ -1488,13 +1493,13 @@ module.exports = function (request) {
 		};
 	};
 
-	Order._markAsArrivedForMe = function () {
+	Order._markAsReceivedForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'markAsArrivedForMe',
+			methodName: 'markAsReceivedForMe',
 			httpMethod: 'POST',
-			path: '/v1/me/orders/{orderId}/arrived',
+			path: '/v1/me/orders/{orderId}/received',
 			params: ['orderId'],
 			withoutPayload: true
 		};
@@ -1507,17 +1512,6 @@ module.exports = function (request) {
 			methodName: 'requestRefundForMe',
 			httpMethod: 'POST',
 			path: '/v1/me/orders/{orderId}/refunds',
-			params: ['orderId']
-		};
-	};
-
-	Order._requestFullRefundForMe = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'requestFullRefundForMe',
-			httpMethod: 'POST',
-			path: '/v1/me/orders/{orderId}/refunds/full',
 			params: ['orderId']
 		};
 	};
@@ -1556,6 +1550,17 @@ module.exports = function (request) {
 		};
 	};
 
+	Order._updateCancellationForMe = function () {
+
+		return {
+			modelName: Order.name,
+			methodName: 'updateCancellationForMe',
+			httpMethod: 'PUT',
+			path: '/v1/me/orders/{orderId}/cancellation',
+			params: ['orderId']
+		};
+	};
+
 	Order._updateTransactionsForMe = function () {
 
 		return {
@@ -1565,17 +1570,6 @@ module.exports = function (request) {
 			path: '/v1/me/orders/{orderId}/transactions',
 			params: ['orderId'],
 			withoutPayload: true
-		};
-	};
-
-	Order._updateCancellationForMe = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'updateCancellationForMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/orders/{orderId}/cancellation',
-			params: ['orderId']
 		};
 	};
 
@@ -1601,13 +1595,13 @@ module.exports = function (request) {
 		};
 	};
 
-	Order._markAsNotArrivedForMe = function () {
+	Order._markAsNotReceivedForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'markAsNotArrivedForMe',
+			methodName: 'markAsNotReceivedForMe',
 			httpMethod: 'DELETE',
-			path: '/v1/me/orders/{orderId}/arrived',
+			path: '/v1/me/orders/{orderId}/received',
 			params: ['orderId']
 		};
 	};
@@ -2179,11 +2173,14 @@ module.exports = function (request) {
 		authenticate: function authenticate() {
 			return request(assign(Subscription._authenticate(), { args: Array.prototype.slice.call(arguments) }));
 		},
+		scheduleForMe: function scheduleForMe() {
+			return request(assign(Subscription._scheduleForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
 		cancelForMe: function cancelForMe() {
 			return request(assign(Subscription._cancelForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		scheduleForMe: function scheduleForMe() {
-			return request(assign(Subscription._scheduleForMe(), { args: Array.prototype.slice.call(arguments) }));
+		updateForMe: function updateForMe() {
+			return request(assign(Subscription._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		updateCancellationForMe: function updateCancellationForMe() {
 			return request(assign(Subscription._updateCancellationForMe(), { args: Array.prototype.slice.call(arguments) }));
@@ -2234,6 +2231,17 @@ module.exports = function (request) {
 		};
 	};
 
+	Subscription._scheduleForMe = function () {
+
+		return {
+			modelName: Subscription.name,
+			methodName: 'scheduleForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/subscriptions/{subscriptionId}/scheduled',
+			params: ['subscriptionId']
+		};
+	};
+
 	Subscription._cancelForMe = function () {
 
 		return {
@@ -2245,13 +2253,13 @@ module.exports = function (request) {
 		};
 	};
 
-	Subscription._scheduleForMe = function () {
+	Subscription._updateForMe = function () {
 
 		return {
 			modelName: Subscription.name,
-			methodName: 'scheduleForMe',
-			httpMethod: 'POST',
-			path: '/v1/me/subscriptions/{subscriptionId}/scheduled',
+			methodName: 'updateForMe',
+			httpMethod: 'PUT',
+			path: '/v1/me/subscriptions/{subscriptionId}',
 			params: ['subscriptionId']
 		};
 	};
