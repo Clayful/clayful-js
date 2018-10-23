@@ -1,6 +1,6 @@
 # Clayful JavaScript & Node.js SDK
 
-Official JavaScript & Node.js SDK for [clayful.io](http://clayful.io).
+Official JavaScript & Node.js SDK for [clayful.io](https://clayful.io).
 
 ## Build
 
@@ -16,4 +16,4 @@ npm test
 
 ## Links
 
-- [API & SDK Documentation](http://doc.clayful.io)
+- [API & SDK Documentation](https://dev.clayful.io)
