@@ -90,15 +90,7 @@ Clayful.normalizeQueryValues = function () {
 	var query = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
 
-	var cloned = {};
-
-	// Stringify query values
-	for (var key in query) {
-
-		cloned[key] = encodeURIComponent(query[key]);
-	}
-
-	return cloned;
+	return query;
 };
 
 Clayful.wrapRequestCallback = function (extracted) {
