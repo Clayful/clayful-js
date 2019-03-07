@@ -1,9 +1,31 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+"use strict";
+
+module.exports = function (callback) {
+
+	var resolve = void 0;
+	var reject = void 0;
+
+	var promise = callback.Promise ? new callback.Promise(function (_resolve, _reject) {
+		resolve = _resolve;
+		reject = _reject;
+	}) : null;
+
+	callback = promise ? function (err, result) {
+		return err ? reject(err) : resolve(result);
+	} : callback;
+
+	return { promise: promise, callback: callback };
+};
+
+},{}],2:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var callbackAsPromise = require('../lib/callbackAsPromise');
 
 var parseHeaders = function parseHeaders(headers) {
 
@@ -28,6 +50,11 @@ var jQueryRequestMiddleware = function jQueryRequestMiddleware($) {
 	$.support.cors = true;
 
 	return function (detail, ClayfulError, callback) {
+		var _callbackAsPromise = callbackAsPromise(callback),
+		    promise = _callbackAsPromise.promise,
+		    c = _callbackAsPromise.callback;
+
+		callback = c;
 
 		var query = $.param(detail.query);
 
@@ -84,6 +111,8 @@ var jQueryRequestMiddleware = function jQueryRequestMiddleware($) {
 
 			return callback(error);
 		});
+
+		return promise;
 	};
 };
 
@@ -95,4 +124,4 @@ if ((typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object'
 	window.jQueryRequestMiddleware = jQueryRequestMiddleware;
 }
 
-},{}]},{},[1]);
+},{"../lib/callbackAsPromise":1}]},{},[2]);

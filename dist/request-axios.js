@@ -1,10 +1,37 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+"use strict";
+
+module.exports = function (callback) {
+
+	var resolve = void 0;
+	var reject = void 0;
+
+	var promise = callback.Promise ? new callback.Promise(function (_resolve, _reject) {
+		resolve = _resolve;
+		reject = _reject;
+	}) : null;
+
+	callback = promise ? function (err, result) {
+		return err ? reject(err) : resolve(result);
+	} : callback;
+
+	return { promise: promise, callback: callback };
+};
+
+},{}],2:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
+var callbackAsPromise = require('../lib/callbackAsPromise');
+
 var axiosRequestMiddleware = function axiosRequestMiddleware(axios) {
 	return function (detail, ClayfulError, callback) {
+		var _callbackAsPromise = callbackAsPromise(callback),
+		    promise = _callbackAsPromise.promise,
+		    c = _callbackAsPromise.callback;
+
+		callback = c;
 
 		// Promise -> regular fn(err, result) format
 		var wrappedCallback = function wrappedCallback(err, result) {
@@ -60,6 +87,8 @@ var axiosRequestMiddleware = function axiosRequestMiddleware(axios) {
 
 			return wrappedCallback(error);
 		});
+
+		return promise;
 	};
 };
 
@@ -71,4 +100,4 @@ if ((typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object'
 	window.axiosRequestMiddleware = axiosRequestMiddleware;
 }
 
-},{}]},{},[1]);
+},{"../lib/callbackAsPromise":1}]},{},[2]);

@@ -38,7 +38,8 @@ var Clayful = {
 	listeners: {
 		request: [],
 		response: []
-	}
+	},
+	Promise: typeof Promise === 'function' ? Promise : null
 };
 
 Clayful.optionsToHeaders = function () {
@@ -133,6 +134,7 @@ Clayful.extractRequestArguments = function (options) {
 
 		rest.push(result.callback); // Restore rest array
 		result.callback = function () {}; // Put an empty function as default if the last argument isn't a function,
+		result.callback.Promise = Clayful.Promise;
 	}
 
 	if ((options.httpMethod === 'POST' || options.httpMethod === 'PUT') && !options.withoutPayload) {
@@ -172,8 +174,14 @@ Clayful.callAPI = function (options) {
 
 	Clayful.trigger('request', extracted);
 
+	var wrappedCallback = Clayful.wrapRequestCallback(extracted);
+
+	if (extracted.callback.Promise) {
+		wrappedCallback.Promise = extracted.callback.Promise;
+	}
+
 	// ClayfulError should be used for generating API errors from Clayful API
-	return request(extracted, ClayfulError, Clayful.wrapRequestCallback(extracted));
+	return request(extracted, ClayfulError, wrappedCallback);
 };
 
 // Abstracted API request method
