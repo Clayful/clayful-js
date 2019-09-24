@@ -389,17 +389,20 @@ Clayful.formatPrice = function (number) {
 
 module.exports = Clayful;
 
-},{"../clayful-error":1,"../util/assign":29}],3:[function(require,module,exports){
+},{"../clayful-error":1,"../util/assign":30}],3:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var Clayful = require('../clayful');
 var models = require('../models-js');
+var LocalCart = require('../local-cart');
 
 Clayful.defaultHeaders['Clayful-SDK'] = 'clayful-js';
 
 Clayful.setModels(models);
+
+Clayful.LocalCart = LocalCart;
 
 if ((typeof module === 'undefined' ? 'undefined' : _typeof(module)) === 'object' && module.exports) {
 	module.exports = Clayful;
@@ -409,7 +412,203 @@ if ((typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object'
 	window.Clayful = Clayful;
 }
 
-},{"../clayful":2,"../models-js":15}],4:[function(require,module,exports){
+},{"../clayful":2,"../local-cart":4,"../models-js":16}],4:[function(require,module,exports){
+'use strict';
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var assign = require('../util/assign');
+
+var LocalCart = {
+    storage: (typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object' ? window.localStorage : null,
+    storageKey: '__cartItems__',
+    items: null
+};
+
+// ISO Date String -> Date
+LocalCart.parseISOString = function (s) {
+
+    var b = s.split(/\D+/);
+
+    return new Date(Date.UTC(b[0], --b[1], b[2], b[3], b[4], b[5], b[6]));
+};
+
+// Config LocalCart
+LocalCart.config = function (options) {
+    return assign(LocalCart, options);
+};
+
+// Limit total number of items to 50
+LocalCart.limitTotal = function (items) {
+
+    if (!items) return;
+
+    var total = LocalCart.items.reduce(function (all, item) {
+        return all.concat(item, item.bundleItems || []);
+    }, []).length;
+
+    if (total > 50) {
+        LocalCart.items = LocalCart.items.slice(1);
+    }
+};
+
+// Read items from the storage
+LocalCart.loadItems = function () {
+
+    LocalCart.items = (LocalCart.items || JSON.parse(LocalCart.storage.getItem(LocalCart.storageKey) || '[]')).map(function (item) {
+
+        item.addedAt = typeof item.addedAt === 'string' ? LocalCart.parseISOString(item.addedAt) : item.addedAt;
+
+        return item;
+    });
+
+    return LocalCart.items;
+};
+
+// Save items to the storage
+LocalCart.saveItems = function () {
+    LocalCart.limitTotal();
+    LocalCart.storage.setItem(LocalCart.storageKey, JSON.stringify(LocalCart.items));
+};
+
+// Set unique item IDs
+LocalCart.setItemDefaults = function (item) {
+
+    [].concat(item, item.bundleItems || []).forEach(function (item) {
+        item._id = item._id || (Math.random() + '').slice(2, 17);
+        item.shippingMethod = item.shippingMethod || null;
+    });
+
+    return item;
+};
+
+// Find an item by ID
+LocalCart.findItem = function (items, itemId) {
+
+    if (typeof items === 'string' && !itemId) {
+        itemId = items;
+        items = LocalCart.items;
+    }
+
+    items = items || [];
+
+    for (var i = 0; i < items.length; i++) {
+
+        var item = items[i];
+
+        if (item._id === itemId + '') {
+            return item;
+        }
+    }
+
+    return null;
+};
+
+// Add an item
+LocalCart.addItem = LocalCart.addItemForMe = function (item) {
+
+    if (!item) return;
+
+    LocalCart.setItemDefaults(item);
+
+    item.bundleItems = item.bundleItems || [];
+    item.addedAt = new Date();
+
+    LocalCart.items = LocalCart.loadItems().concat(item);
+    LocalCart.saveItems();
+
+    return item;
+};
+
+// Update an item
+LocalCart.updateItem = LocalCart.updateItemForMe = function (itemId, update) {
+
+    if (!update) return;
+
+    LocalCart.loadItems();
+
+    var found = LocalCart.findItem(LocalCart.items, itemId);
+
+    if (!found) return;
+
+    var bundleItems = update.bundleItems;
+
+    delete update.bundleItems;
+
+    assign(found, update);
+
+    if (bundleItems) {
+
+        found.bundleItems = found.bundleItems || [];
+
+        if (bundleItems.length) {
+
+            found.bundleItems = bundleItems;
+        } else {
+            var _loop = function _loop(bundleId) {
+
+                var bundleItem = LocalCart.findItem(found.bundleItems, bundleId);
+                var bundleUpdate = bundleItems[bundleId];
+
+                if (!bundleItem && bundleUpdate) {
+                    found.bundleItems.push(bundleUpdate);
+                }
+
+                if (bundleItem && bundleUpdate) {
+                    assign(bundleItem, bundleUpdate);
+                }
+
+                if (bundleUpdate === null) {
+                    found.bundleItems = found.bundleItems.filter(function (bundleItem) {
+                        return bundleItem._id !== bundleId;
+                    });
+                }
+            };
+
+            for (var bundleId in bundleItems) {
+                _loop(bundleId);
+            }
+        }
+    }
+
+    LocalCart.setItemDefaults(found);
+    LocalCart.saveItems();
+
+    return found;
+};
+
+// Delete an item
+LocalCart.deleteItem = LocalCart.deleteItemForMe = function (itemId) {
+
+    LocalCart.items = LocalCart.loadItems().filter(function (item) {
+        return item._id !== itemId + '';
+    });
+    LocalCart.saveItems();
+};
+
+// Delete all items
+LocalCart.empty = LocalCart.emptyForMe = function () {
+
+    LocalCart.items = [];
+    LocalCart.saveItems();
+};
+
+// Load all items from the storage when initialized
+LocalCart.loadItems();
+
+if ((typeof module === 'undefined' ? 'undefined' : _typeof(module)) === 'object') {
+    module.exports = LocalCart;
+}
+
+if ((typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object') {
+    if (_typeof(window.Clayful) === 'object') {
+        window.Clayful.LocalCart = LocalCart;
+    } else {
+        window.Clayful = { LocalCart: LocalCart };
+    }
+}
+
+},{"../util/assign":30}],5:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -466,7 +665,7 @@ module.exports = function (request) {
 	return Brand;
 };
 
-},{"../util/assign":29}],5:[function(require,module,exports){
+},{"../util/assign":30}],6:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -607,7 +806,7 @@ module.exports = function (request) {
 	return Cart;
 };
 
-},{"../util/assign":29}],6:[function(require,module,exports){
+},{"../util/assign":30}],7:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -664,7 +863,7 @@ module.exports = function (request) {
 	return Catalog;
 };
 
-},{"../util/assign":29}],7:[function(require,module,exports){
+},{"../util/assign":30}],8:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -721,7 +920,7 @@ module.exports = function (request) {
 	return Collection;
 };
 
-},{"../util/assign":29}],8:[function(require,module,exports){
+},{"../util/assign":30}],9:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -778,7 +977,7 @@ module.exports = function (request) {
 	return Country;
 };
 
-},{"../util/assign":29}],9:[function(require,module,exports){
+},{"../util/assign":30}],10:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -835,7 +1034,7 @@ module.exports = function (request) {
 	return Coupon;
 };
 
-},{"../util/assign":29}],10:[function(require,module,exports){
+},{"../util/assign":30}],11:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -892,7 +1091,7 @@ module.exports = function (request) {
 	return Currency;
 };
 
-},{"../util/assign":29}],11:[function(require,module,exports){
+},{"../util/assign":30}],12:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1104,7 +1303,7 @@ module.exports = function (request) {
 	return Customer;
 };
 
-},{"../util/assign":29}],12:[function(require,module,exports){
+},{"../util/assign":30}],13:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1161,7 +1360,7 @@ module.exports = function (request) {
 	return Group;
 };
 
-},{"../util/assign":29}],13:[function(require,module,exports){
+},{"../util/assign":30}],14:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1262,7 +1461,7 @@ module.exports = function (request) {
 	return Image;
 };
 
-},{"../util/assign":29}],14:[function(require,module,exports){
+},{"../util/assign":30}],15:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1333,7 +1532,7 @@ module.exports = function (request) {
 	return Impression;
 };
 
-},{"../util/assign":29}],15:[function(require,module,exports){
+},{"../util/assign":30}],16:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
@@ -1367,7 +1566,7 @@ module.exports = function (request) {
 	};
 };
 
-},{"./brand.js":4,"./cart.js":5,"./catalog.js":6,"./collection.js":7,"./country.js":8,"./coupon.js":9,"./currency.js":10,"./customer.js":11,"./group.js":12,"./image.js":13,"./impression.js":14,"./order.js":16,"./orderTag.js":17,"./paymentMethod.js":18,"./product.js":19,"./review.js":20,"./reviewComment.js":21,"./shippingMethod.js":22,"./store.js":23,"./subscription.js":24,"./subscriptionPlan.js":25,"./taxCategory.js":26,"./tracker.js":27,"./wishList.js":28}],16:[function(require,module,exports){
+},{"./brand.js":5,"./cart.js":6,"./catalog.js":7,"./collection.js":8,"./country.js":9,"./coupon.js":10,"./currency.js":11,"./customer.js":12,"./group.js":13,"./image.js":14,"./impression.js":15,"./order.js":17,"./orderTag.js":18,"./paymentMethod.js":19,"./product.js":20,"./review.js":21,"./reviewComment.js":22,"./shippingMethod.js":23,"./store.js":24,"./subscription.js":25,"./subscriptionPlan.js":26,"./taxCategory.js":27,"./tracker.js":28,"./wishList.js":29}],17:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1609,7 +1808,7 @@ module.exports = function (request) {
 	return Order;
 };
 
-},{"../util/assign":29}],17:[function(require,module,exports){
+},{"../util/assign":30}],18:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1666,7 +1865,7 @@ module.exports = function (request) {
 	return OrderTag;
 };
 
-},{"../util/assign":29}],18:[function(require,module,exports){
+},{"../util/assign":30}],19:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1723,7 +1922,7 @@ module.exports = function (request) {
 	return PaymentMethod;
 };
 
-},{"../util/assign":29}],19:[function(require,module,exports){
+},{"../util/assign":30}],20:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1780,7 +1979,7 @@ module.exports = function (request) {
 	return Product;
 };
 
-},{"../util/assign":29}],20:[function(require,module,exports){
+},{"../util/assign":30}],21:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1937,7 +2136,7 @@ module.exports = function (request) {
 	return Review;
 };
 
-},{"../util/assign":29}],21:[function(require,module,exports){
+},{"../util/assign":30}],22:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2065,7 +2264,7 @@ module.exports = function (request) {
 	return ReviewComment;
 };
 
-},{"../util/assign":29}],22:[function(require,module,exports){
+},{"../util/assign":30}],23:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2122,7 +2321,7 @@ module.exports = function (request) {
 	return ShippingMethod;
 };
 
-},{"../util/assign":29}],23:[function(require,module,exports){
+},{"../util/assign":30}],24:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2151,7 +2350,7 @@ module.exports = function (request) {
 	return Store;
 };
 
-},{"../util/assign":29}],24:[function(require,module,exports){
+},{"../util/assign":30}],25:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2278,7 +2477,7 @@ module.exports = function (request) {
 	return Subscription;
 };
 
-},{"../util/assign":29}],25:[function(require,module,exports){
+},{"../util/assign":30}],26:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2335,7 +2534,7 @@ module.exports = function (request) {
 	return SubscriptionPlan;
 };
 
-},{"../util/assign":29}],26:[function(require,module,exports){
+},{"../util/assign":30}],27:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2392,7 +2591,7 @@ module.exports = function (request) {
 	return TaxCategory;
 };
 
-},{"../util/assign":29}],27:[function(require,module,exports){
+},{"../util/assign":30}],28:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2522,7 +2721,7 @@ module.exports = function (request) {
 	return Tracker;
 };
 
-},{"../util/assign":29}],28:[function(require,module,exports){
+},{"../util/assign":30}],29:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2691,7 +2890,7 @@ module.exports = function (request) {
 	return WishList;
 };
 
-},{"../util/assign":29}],29:[function(require,module,exports){
+},{"../util/assign":30}],30:[function(require,module,exports){
 "use strict";
 
 module.exports = function (dest, source) {

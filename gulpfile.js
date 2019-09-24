@@ -103,6 +103,17 @@ gulp.task('compile', ['binder'], () => {
 
 	});
 
+	browserify(`./lib/local-cart`)
+		.transform('babelify', { presets: ['es2015'] })
+		.bundle()
+		.pipe(source('index.js'))
+		.pipe(buffer())
+		.pipe(rename(`local-cart.js`))
+		.pipe(gulp.dest('./dist'))
+		.pipe(uglify())
+		.pipe(rename({ extname: '.min.js' }))
+		.pipe(gulp.dest('./dist'));
+
 });
 
 gulp.task('default', ['compile']);
