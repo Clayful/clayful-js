@@ -389,7 +389,7 @@ Clayful.formatPrice = function (number) {
 
 module.exports = Clayful;
 
-},{"../clayful-error":1,"../util/assign":30}],3:[function(require,module,exports){
+},{"../clayful-error":1,"../util/assign":29}],3:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -412,7 +412,7 @@ if ((typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object'
 	window.Clayful = Clayful;
 }
 
-},{"../clayful":2,"../local-cart":4,"../models-js":16}],4:[function(require,module,exports){
+},{"../clayful":2,"../local-cart":4,"../models-js":15}],4:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -608,7 +608,7 @@ if ((typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object'
     }
 }
 
-},{"../util/assign":30}],5:[function(require,module,exports){
+},{"../util/assign":29}],5:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -665,7 +665,7 @@ module.exports = function (request) {
 	return Brand;
 };
 
-},{"../util/assign":30}],6:[function(require,module,exports){
+},{"../util/assign":29}],6:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -806,7 +806,7 @@ module.exports = function (request) {
 	return Cart;
 };
 
-},{"../util/assign":30}],7:[function(require,module,exports){
+},{"../util/assign":29}],7:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -863,7 +863,7 @@ module.exports = function (request) {
 	return Catalog;
 };
 
-},{"../util/assign":30}],8:[function(require,module,exports){
+},{"../util/assign":29}],8:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -920,7 +920,7 @@ module.exports = function (request) {
 	return Collection;
 };
 
-},{"../util/assign":30}],9:[function(require,module,exports){
+},{"../util/assign":29}],9:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -977,7 +977,7 @@ module.exports = function (request) {
 	return Country;
 };
 
-},{"../util/assign":30}],10:[function(require,module,exports){
+},{"../util/assign":29}],10:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1034,7 +1034,7 @@ module.exports = function (request) {
 	return Coupon;
 };
 
-},{"../util/assign":30}],11:[function(require,module,exports){
+},{"../util/assign":29}],11:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1091,7 +1091,7 @@ module.exports = function (request) {
 	return Currency;
 };
 
-},{"../util/assign":30}],12:[function(require,module,exports){
+},{"../util/assign":29}],12:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1124,6 +1124,9 @@ module.exports = function (request) {
 		},
 		requestVerificationEmail: function requestVerificationEmail() {
 			return request(assign(Customer._requestVerificationEmail(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		requestVerification: function requestVerification() {
+			return request(assign(Customer._requestVerification(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		verify: function verify() {
 			return request(assign(Customer._verify(), { args: Array.prototype.slice.call(arguments) }));
@@ -1234,6 +1237,17 @@ module.exports = function (request) {
 		};
 	};
 
+	Customer._requestVerification = function () {
+
+		return {
+			modelName: Customer.name,
+			methodName: 'requestVerification',
+			httpMethod: 'POST',
+			path: '/v1/customers/verifications/{channelSlug}',
+			params: ['channelSlug']
+		};
+	};
+
 	Customer._verify = function () {
 
 		return {
@@ -1303,7 +1317,7 @@ module.exports = function (request) {
 	return Customer;
 };
 
-},{"../util/assign":30}],13:[function(require,module,exports){
+},{"../util/assign":29}],13:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1360,7 +1374,7 @@ module.exports = function (request) {
 	return Group;
 };
 
-},{"../util/assign":30}],14:[function(require,module,exports){
+},{"../util/assign":29}],14:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1461,78 +1475,7 @@ module.exports = function (request) {
 	return Image;
 };
 
-},{"../util/assign":30}],15:[function(require,module,exports){
-'use strict';
-
-var assign = require('../util/assign');
-
-module.exports = function (request) {
-
-	var Impression = {
-		name: 'Impression',
-		path: '',
-		topBrands: function topBrands() {
-			return request(assign(Impression._topBrands(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		topProducts: function topProducts() {
-			return request(assign(Impression._topProducts(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		topCollections: function topCollections() {
-			return request(assign(Impression._topCollections(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		gather: function gather() {
-			return request(assign(Impression._gather(), { args: Array.prototype.slice.call(arguments) }));
-		}
-	};
-
-	Impression._topBrands = function () {
-
-		return {
-			modelName: Impression.name,
-			methodName: 'topBrands',
-			httpMethod: 'GET',
-			path: '/v1/impressions/{scope}/top/brands',
-			params: ['scope']
-		};
-	};
-
-	Impression._topProducts = function () {
-
-		return {
-			modelName: Impression.name,
-			methodName: 'topProducts',
-			httpMethod: 'GET',
-			path: '/v1/impressions/{scope}/top/products',
-			params: ['scope']
-		};
-	};
-
-	Impression._topCollections = function () {
-
-		return {
-			modelName: Impression.name,
-			methodName: 'topCollections',
-			httpMethod: 'GET',
-			path: '/v1/impressions/{scope}/top/collections',
-			params: ['scope']
-		};
-	};
-
-	Impression._gather = function () {
-
-		return {
-			modelName: Impression.name,
-			methodName: 'gather',
-			httpMethod: 'POST',
-			path: '/v1/impressions/{scope}',
-			params: ['scope']
-		};
-	};
-
-	return Impression;
-};
-
-},{"../util/assign":30}],16:[function(require,module,exports){
+},{"../util/assign":29}],15:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
@@ -1548,7 +1491,6 @@ module.exports = function (request) {
 		Customer: require('./customer.js')(request),
 		Group: require('./group.js')(request),
 		Image: require('./image.js')(request),
-		Impression: require('./impression.js')(request),
 		Order: require('./order.js')(request),
 		OrderTag: require('./orderTag.js')(request),
 		PaymentMethod: require('./paymentMethod.js')(request),
@@ -1560,13 +1502,13 @@ module.exports = function (request) {
 		Subscription: require('./subscription.js')(request),
 		SubscriptionPlan: require('./subscriptionPlan.js')(request),
 		TaxCategory: require('./taxCategory.js')(request),
-		Tracker: require('./tracker.js')(request),
+		Vendor: require('./vendor.js')(request),
 		WishList: require('./wishList.js')(request)
 
 	};
 };
 
-},{"./brand.js":5,"./cart.js":6,"./catalog.js":7,"./collection.js":8,"./country.js":9,"./coupon.js":10,"./currency.js":11,"./customer.js":12,"./group.js":13,"./image.js":14,"./impression.js":15,"./order.js":17,"./orderTag.js":18,"./paymentMethod.js":19,"./product.js":20,"./review.js":21,"./reviewComment.js":22,"./shippingMethod.js":23,"./store.js":24,"./subscription.js":25,"./subscriptionPlan.js":26,"./taxCategory.js":27,"./tracker.js":28,"./wishList.js":29}],17:[function(require,module,exports){
+},{"./brand.js":5,"./cart.js":6,"./catalog.js":7,"./collection.js":8,"./country.js":9,"./coupon.js":10,"./currency.js":11,"./customer.js":12,"./group.js":13,"./image.js":14,"./order.js":16,"./orderTag.js":17,"./paymentMethod.js":18,"./product.js":19,"./review.js":20,"./reviewComment.js":21,"./shippingMethod.js":22,"./store.js":23,"./subscription.js":24,"./subscriptionPlan.js":25,"./taxCategory.js":26,"./vendor.js":27,"./wishList.js":28}],16:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1591,14 +1533,14 @@ module.exports = function (request) {
 		authenticate: function authenticate() {
 			return request(assign(Order._authenticate(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		cancelForMe: function cancelForMe() {
-			return request(assign(Order._cancelForMe(), { args: Array.prototype.slice.call(arguments) }));
+		requestRefundForMe: function requestRefundForMe() {
+			return request(assign(Order._requestRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		markAsReceivedForMe: function markAsReceivedForMe() {
 			return request(assign(Order._markAsReceivedForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		requestRefundForMe: function requestRefundForMe() {
-			return request(assign(Order._requestRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
+		cancelForMe: function cancelForMe() {
+			return request(assign(Order._cancelForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		cancelRefundForMe: function cancelRefundForMe() {
 			return request(assign(Order._cancelRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
@@ -1609,11 +1551,11 @@ module.exports = function (request) {
 		updateForMe: function updateForMe() {
 			return request(assign(Order._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		updateCancellationForMe: function updateCancellationForMe() {
-			return request(assign(Order._updateCancellationForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		updateTransactionsForMe: function updateTransactionsForMe() {
 			return request(assign(Order._updateTransactionsForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		updateCancellationForMe: function updateCancellationForMe() {
+			return request(assign(Order._updateCancellationForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		updateRefundForMe: function updateRefundForMe() {
 			return request(assign(Order._updateRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
@@ -1681,13 +1623,13 @@ module.exports = function (request) {
 		};
 	};
 
-	Order._cancelForMe = function () {
+	Order._requestRefundForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'cancelForMe',
+			methodName: 'requestRefundForMe',
 			httpMethod: 'POST',
-			path: '/v1/me/orders/{orderId}/cancellation',
+			path: '/v1/me/orders/{orderId}/refunds',
 			params: ['orderId']
 		};
 	};
@@ -1704,13 +1646,13 @@ module.exports = function (request) {
 		};
 	};
 
-	Order._requestRefundForMe = function () {
+	Order._cancelForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'requestRefundForMe',
+			methodName: 'cancelForMe',
 			httpMethod: 'POST',
-			path: '/v1/me/orders/{orderId}/refunds',
+			path: '/v1/me/orders/{orderId}/cancellation',
 			params: ['orderId']
 		};
 	};
@@ -1749,17 +1691,6 @@ module.exports = function (request) {
 		};
 	};
 
-	Order._updateCancellationForMe = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'updateCancellationForMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/orders/{orderId}/cancellation',
-			params: ['orderId']
-		};
-	};
-
 	Order._updateTransactionsForMe = function () {
 
 		return {
@@ -1769,6 +1700,17 @@ module.exports = function (request) {
 			path: '/v1/me/orders/{orderId}/transactions',
 			params: ['orderId'],
 			withoutPayload: true
+		};
+	};
+
+	Order._updateCancellationForMe = function () {
+
+		return {
+			modelName: Order.name,
+			methodName: 'updateCancellationForMe',
+			httpMethod: 'PUT',
+			path: '/v1/me/orders/{orderId}/cancellation',
+			params: ['orderId']
 		};
 	};
 
@@ -1808,7 +1750,7 @@ module.exports = function (request) {
 	return Order;
 };
 
-},{"../util/assign":30}],18:[function(require,module,exports){
+},{"../util/assign":29}],17:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1865,7 +1807,7 @@ module.exports = function (request) {
 	return OrderTag;
 };
 
-},{"../util/assign":30}],19:[function(require,module,exports){
+},{"../util/assign":29}],18:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1922,7 +1864,7 @@ module.exports = function (request) {
 	return PaymentMethod;
 };
 
-},{"../util/assign":30}],20:[function(require,module,exports){
+},{"../util/assign":29}],19:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1979,7 +1921,7 @@ module.exports = function (request) {
 	return Product;
 };
 
-},{"../util/assign":30}],21:[function(require,module,exports){
+},{"../util/assign":29}],20:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2136,7 +2078,7 @@ module.exports = function (request) {
 	return Review;
 };
 
-},{"../util/assign":30}],22:[function(require,module,exports){
+},{"../util/assign":29}],21:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2264,7 +2206,7 @@ module.exports = function (request) {
 	return ReviewComment;
 };
 
-},{"../util/assign":30}],23:[function(require,module,exports){
+},{"../util/assign":29}],22:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2321,7 +2263,7 @@ module.exports = function (request) {
 	return ShippingMethod;
 };
 
-},{"../util/assign":30}],24:[function(require,module,exports){
+},{"../util/assign":29}],23:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2350,7 +2292,7 @@ module.exports = function (request) {
 	return Store;
 };
 
-},{"../util/assign":30}],25:[function(require,module,exports){
+},{"../util/assign":29}],24:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2477,7 +2419,7 @@ module.exports = function (request) {
 	return Subscription;
 };
 
-},{"../util/assign":30}],26:[function(require,module,exports){
+},{"../util/assign":29}],25:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2534,7 +2476,7 @@ module.exports = function (request) {
 	return SubscriptionPlan;
 };
 
-},{"../util/assign":30}],27:[function(require,module,exports){
+},{"../util/assign":29}],26:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2591,137 +2533,64 @@ module.exports = function (request) {
 	return TaxCategory;
 };
 
-},{"../util/assign":30}],28:[function(require,module,exports){
+},{"../util/assign":29}],27:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
 
 module.exports = function (request) {
 
-	var Tracker = {
-		name: 'Tracker',
-		path: '',
-		getByCustomerForMe: function getByCustomerForMe() {
-			return request(assign(Tracker._getByCustomerForMe(), { args: Array.prototype.slice.call(arguments) }));
+	var Vendor = {
+		name: 'Vendor',
+		path: 'vendors',
+		list: function list() {
+			return request(assign(Vendor._list(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		getForMe: function getForMe() {
-			return request(assign(Tracker._getForMe(), { args: Array.prototype.slice.call(arguments) }));
+		count: function count() {
+			return request(assign(Vendor._count(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		getAsNonRegisteredForMe: function getAsNonRegisteredForMe() {
-			return request(assign(Tracker._getAsNonRegisteredForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		createForMe: function createForMe() {
-			return request(assign(Tracker._createForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		createAsNonRegisteredForMe: function createAsNonRegisteredForMe() {
-			return request(assign(Tracker._createAsNonRegisteredForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		changeOwnerForMe: function changeOwnerForMe() {
-			return request(assign(Tracker._changeOwnerForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		deleteForMe: function deleteForMe() {
-			return request(assign(Tracker._deleteForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		deleteAsNonRegisteredForMe: function deleteAsNonRegisteredForMe() {
-			return request(assign(Tracker._deleteAsNonRegisteredForMe(), { args: Array.prototype.slice.call(arguments) }));
+		get: function get() {
+			return request(assign(Vendor._get(), { args: Array.prototype.slice.call(arguments) }));
 		}
 	};
 
-	Tracker._getByCustomerForMe = function () {
+	Vendor._list = function () {
 
 		return {
-			modelName: Tracker.name,
-			methodName: 'getByCustomerForMe',
+			modelName: Vendor.name,
+			methodName: 'list',
 			httpMethod: 'GET',
-			path: '/v1/me/tracker',
+			path: '/v1/vendors',
 			params: []
 		};
 	};
 
-	Tracker._getForMe = function () {
+	Vendor._count = function () {
 
 		return {
-			modelName: Tracker.name,
-			methodName: 'getForMe',
+			modelName: Vendor.name,
+			methodName: 'count',
 			httpMethod: 'GET',
-			path: '/v1/me/trackers/{trackerId}',
-			params: ['trackerId']
+			path: '/v1/vendors/count',
+			params: []
 		};
 	};
 
-	Tracker._getAsNonRegisteredForMe = function () {
+	Vendor._get = function () {
 
 		return {
-			modelName: Tracker.name,
-			methodName: 'getAsNonRegisteredForMe',
+			modelName: Vendor.name,
+			methodName: 'get',
 			httpMethod: 'GET',
-			path: '/v1/me/non-registered/trackers/{trackerId}',
-			params: ['trackerId']
+			path: '/v1/vendors/{vendorId}',
+			params: ['vendorId']
 		};
 	};
 
-	Tracker._createForMe = function () {
-
-		return {
-			modelName: Tracker.name,
-			methodName: 'createForMe',
-			httpMethod: 'POST',
-			path: '/v1/me/trackers',
-			params: [],
-			withoutPayload: true
-		};
-	};
-
-	Tracker._createAsNonRegisteredForMe = function () {
-
-		return {
-			modelName: Tracker.name,
-			methodName: 'createAsNonRegisteredForMe',
-			httpMethod: 'POST',
-			path: '/v1/me/non-registered/trackers',
-			params: [],
-			withoutPayload: true
-		};
-	};
-
-	Tracker._changeOwnerForMe = function () {
-
-		return {
-			modelName: Tracker.name,
-			methodName: 'changeOwnerForMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/trackers/{trackerId}/customer',
-			params: ['trackerId'],
-			withoutPayload: true
-		};
-	};
-
-	Tracker._deleteForMe = function () {
-
-		return {
-			modelName: Tracker.name,
-			methodName: 'deleteForMe',
-			httpMethod: 'DELETE',
-			path: '/v1/me/trackers/{trackerId}',
-			params: ['trackerId']
-		};
-	};
-
-	Tracker._deleteAsNonRegisteredForMe = function () {
-
-		return {
-			modelName: Tracker.name,
-			methodName: 'deleteAsNonRegisteredForMe',
-			httpMethod: 'DELETE',
-			path: '/v1/me/non-registered/trackers/{trackerId}',
-			params: ['trackerId']
-		};
-	};
-
-	return Tracker;
+	return Vendor;
 };
 
-},{"../util/assign":30}],29:[function(require,module,exports){
+},{"../util/assign":29}],28:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2890,7 +2759,7 @@ module.exports = function (request) {
 	return WishList;
 };
 
-},{"../util/assign":30}],30:[function(require,module,exports){
+},{"../util/assign":29}],29:[function(require,module,exports){
 "use strict";
 
 module.exports = function (dest, source) {
