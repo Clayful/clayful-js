@@ -1533,11 +1533,11 @@ module.exports = function (request) {
 		authenticate: function authenticate() {
 			return request(assign(Order._authenticate(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		requestRefundForMe: function requestRefundForMe() {
-			return request(assign(Order._requestRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		markAsReceivedForMe: function markAsReceivedForMe() {
 			return request(assign(Order._markAsReceivedForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		requestRefundForMe: function requestRefundForMe() {
+			return request(assign(Order._requestRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		cancelForMe: function cancelForMe() {
 			return request(assign(Order._cancelForMe(), { args: Array.prototype.slice.call(arguments) }));
@@ -1623,17 +1623,6 @@ module.exports = function (request) {
 		};
 	};
 
-	Order._requestRefundForMe = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'requestRefundForMe',
-			httpMethod: 'POST',
-			path: '/v1/me/orders/{orderId}/refunds',
-			params: ['orderId']
-		};
-	};
-
 	Order._markAsReceivedForMe = function () {
 
 		return {
@@ -1643,6 +1632,17 @@ module.exports = function (request) {
 			path: '/v1/me/orders/{orderId}/received',
 			params: ['orderId'],
 			withoutPayload: true
+		};
+	};
+
+	Order._requestRefundForMe = function () {
+
+		return {
+			modelName: Order.name,
+			methodName: 'requestRefundForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/orders/{orderId}/refunds',
+			params: ['orderId']
 		};
 	};
 
