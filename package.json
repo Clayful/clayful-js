@@ -15,26 +15,5 @@
   "license": "MIT",
   "dependencies": {
     "axios": "^0.18.0"
-  },
-  "devDependencies": {
-    "babel-preset-es2015": "^6.18.0",
-    "babelify": "^7.3.0",
-    "boom": "^3.2.2",
-    "browserify": "^13.1.1",
-    "clayful-lib-spec": "^2.1.0",
-    "cryptiles": "^4.1.2",
-    "decache": "^4.1.0",
-    "expect.js": "^0.3.1",
-    "form-data": "^2.1.2",
-    "gulp": "^3.9.1",
-    "gulp-clean": "^0.3.2",
-    "gulp-mustache": "^2.2.0",
-    "gulp-rename": "^1.4.0",
-    "gulp-uglify": "^2.0.0",
-    "hapi": "^14.1.0",
-    "lodash": "^4.17.11",
-    "natives": "^1.1.6",
-    "vinyl-buffer": "^1.0.0",
-    "vinyl-source-stream": "^1.1.0"
   }
 }
