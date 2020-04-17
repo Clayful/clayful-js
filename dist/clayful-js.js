@@ -1533,14 +1533,14 @@ module.exports = function (request) {
 		authenticate: function authenticate() {
 			return request(assign(Order._authenticate(), { args: Array.prototype.slice.call(arguments) }));
 		},
+		cancelForMe: function cancelForMe() {
+			return request(assign(Order._cancelForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
 		markAsReceivedForMe: function markAsReceivedForMe() {
 			return request(assign(Order._markAsReceivedForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		requestRefundForMe: function requestRefundForMe() {
 			return request(assign(Order._requestRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		cancelForMe: function cancelForMe() {
-			return request(assign(Order._cancelForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		cancelRefundForMe: function cancelRefundForMe() {
 			return request(assign(Order._cancelRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
@@ -1623,6 +1623,17 @@ module.exports = function (request) {
 		};
 	};
 
+	Order._cancelForMe = function () {
+
+		return {
+			modelName: Order.name,
+			methodName: 'cancelForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/orders/{orderId}/cancellation',
+			params: ['orderId']
+		};
+	};
+
 	Order._markAsReceivedForMe = function () {
 
 		return {
@@ -1642,17 +1653,6 @@ module.exports = function (request) {
 			methodName: 'requestRefundForMe',
 			httpMethod: 'POST',
 			path: '/v1/me/orders/{orderId}/refunds',
-			params: ['orderId']
-		};
-	};
-
-	Order._cancelForMe = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'cancelForMe',
-			httpMethod: 'POST',
-			path: '/v1/me/orders/{orderId}/cancellation',
 			params: ['orderId']
 		};
 	};
@@ -2314,11 +2314,11 @@ module.exports = function (request) {
 		authenticate: function authenticate() {
 			return request(assign(Subscription._authenticate(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		scheduleForMe: function scheduleForMe() {
-			return request(assign(Subscription._scheduleForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		cancelForMe: function cancelForMe() {
 			return request(assign(Subscription._cancelForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		scheduleForMe: function scheduleForMe() {
+			return request(assign(Subscription._scheduleForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		updateForMe: function updateForMe() {
 			return request(assign(Subscription._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
@@ -2372,17 +2372,6 @@ module.exports = function (request) {
 		};
 	};
 
-	Subscription._scheduleForMe = function () {
-
-		return {
-			modelName: Subscription.name,
-			methodName: 'scheduleForMe',
-			httpMethod: 'POST',
-			path: '/v1/me/subscriptions/{subscriptionId}/scheduled',
-			params: ['subscriptionId']
-		};
-	};
-
 	Subscription._cancelForMe = function () {
 
 		return {
@@ -2390,6 +2379,17 @@ module.exports = function (request) {
 			methodName: 'cancelForMe',
 			httpMethod: 'POST',
 			path: '/v1/me/subscriptions/{subscriptionId}/cancellation',
+			params: ['subscriptionId']
+		};
+	};
+
+	Subscription._scheduleForMe = function () {
+
+		return {
+			modelName: Subscription.name,
+			methodName: 'scheduleForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/subscriptions/{subscriptionId}/scheduled',
 			params: ['subscriptionId']
 		};
 	};
