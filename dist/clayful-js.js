@@ -389,7 +389,7 @@ Clayful.formatPrice = function (number) {
 
 module.exports = Clayful;
 
-},{"../clayful-error":1,"../util/assign":29}],3:[function(require,module,exports){
+},{"../clayful-error":1,"../util/assign":30}],3:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -608,7 +608,7 @@ if ((typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object'
     }
 }
 
-},{"../util/assign":29}],5:[function(require,module,exports){
+},{"../util/assign":30}],5:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -665,7 +665,7 @@ module.exports = function (request) {
 	return Brand;
 };
 
-},{"../util/assign":29}],6:[function(require,module,exports){
+},{"../util/assign":30}],6:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -806,7 +806,7 @@ module.exports = function (request) {
 	return Cart;
 };
 
-},{"../util/assign":29}],7:[function(require,module,exports){
+},{"../util/assign":30}],7:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -863,7 +863,7 @@ module.exports = function (request) {
 	return Catalog;
 };
 
-},{"../util/assign":29}],8:[function(require,module,exports){
+},{"../util/assign":30}],8:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -920,7 +920,7 @@ module.exports = function (request) {
 	return Collection;
 };
 
-},{"../util/assign":29}],9:[function(require,module,exports){
+},{"../util/assign":30}],9:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -977,7 +977,7 @@ module.exports = function (request) {
 	return Country;
 };
 
-},{"../util/assign":29}],10:[function(require,module,exports){
+},{"../util/assign":30}],10:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1034,7 +1034,7 @@ module.exports = function (request) {
 	return Coupon;
 };
 
-},{"../util/assign":29}],11:[function(require,module,exports){
+},{"../util/assign":30}],11:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1091,7 +1091,7 @@ module.exports = function (request) {
 	return Currency;
 };
 
-},{"../util/assign":29}],12:[function(require,module,exports){
+},{"../util/assign":30}],12:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1317,7 +1317,7 @@ module.exports = function (request) {
 	return Customer;
 };
 
-},{"../util/assign":29}],13:[function(require,module,exports){
+},{"../util/assign":30}],13:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1374,7 +1374,7 @@ module.exports = function (request) {
 	return Group;
 };
 
-},{"../util/assign":29}],14:[function(require,module,exports){
+},{"../util/assign":30}],14:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1475,7 +1475,7 @@ module.exports = function (request) {
 	return Image;
 };
 
-},{"../util/assign":29}],15:[function(require,module,exports){
+},{"../util/assign":30}],15:[function(require,module,exports){
 'use strict';
 
 module.exports = function (request) {
@@ -1498,6 +1498,7 @@ module.exports = function (request) {
 		Review: require('./review.js')(request),
 		ReviewComment: require('./reviewComment.js')(request),
 		ShippingMethod: require('./shippingMethod.js')(request),
+		ShippingPolicy: require('./shippingPolicy.js')(request),
 		Store: require('./store.js')(request),
 		Subscription: require('./subscription.js')(request),
 		SubscriptionPlan: require('./subscriptionPlan.js')(request),
@@ -1508,7 +1509,7 @@ module.exports = function (request) {
 	};
 };
 
-},{"./brand.js":5,"./cart.js":6,"./catalog.js":7,"./collection.js":8,"./country.js":9,"./coupon.js":10,"./currency.js":11,"./customer.js":12,"./group.js":13,"./image.js":14,"./order.js":16,"./orderTag.js":17,"./paymentMethod.js":18,"./product.js":19,"./review.js":20,"./reviewComment.js":21,"./shippingMethod.js":22,"./store.js":23,"./subscription.js":24,"./subscriptionPlan.js":25,"./taxCategory.js":26,"./vendor.js":27,"./wishList.js":28}],16:[function(require,module,exports){
+},{"./brand.js":5,"./cart.js":6,"./catalog.js":7,"./collection.js":8,"./country.js":9,"./coupon.js":10,"./currency.js":11,"./customer.js":12,"./group.js":13,"./image.js":14,"./order.js":16,"./orderTag.js":17,"./paymentMethod.js":18,"./product.js":19,"./review.js":20,"./reviewComment.js":21,"./shippingMethod.js":22,"./shippingPolicy.js":23,"./store.js":24,"./subscription.js":25,"./subscriptionPlan.js":26,"./taxCategory.js":27,"./vendor.js":28,"./wishList.js":29}],16:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1750,7 +1751,7 @@ module.exports = function (request) {
 	return Order;
 };
 
-},{"../util/assign":29}],17:[function(require,module,exports){
+},{"../util/assign":30}],17:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1807,7 +1808,7 @@ module.exports = function (request) {
 	return OrderTag;
 };
 
-},{"../util/assign":29}],18:[function(require,module,exports){
+},{"../util/assign":30}],18:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1864,7 +1865,7 @@ module.exports = function (request) {
 	return PaymentMethod;
 };
 
-},{"../util/assign":29}],19:[function(require,module,exports){
+},{"../util/assign":30}],19:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -1921,7 +1922,7 @@ module.exports = function (request) {
 	return Product;
 };
 
-},{"../util/assign":29}],20:[function(require,module,exports){
+},{"../util/assign":30}],20:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2078,7 +2079,7 @@ module.exports = function (request) {
 	return Review;
 };
 
-},{"../util/assign":29}],21:[function(require,module,exports){
+},{"../util/assign":30}],21:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2206,7 +2207,7 @@ module.exports = function (request) {
 	return ReviewComment;
 };
 
-},{"../util/assign":29}],22:[function(require,module,exports){
+},{"../util/assign":30}],22:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2263,7 +2264,64 @@ module.exports = function (request) {
 	return ShippingMethod;
 };
 
-},{"../util/assign":29}],23:[function(require,module,exports){
+},{"../util/assign":30}],23:[function(require,module,exports){
+'use strict';
+
+var assign = require('../util/assign');
+
+module.exports = function (request) {
+
+	var ShippingPolicy = {
+		name: 'ShippingPolicy',
+		path: 'shipping/policies',
+		list: function list() {
+			return request(assign(ShippingPolicy._list(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		count: function count() {
+			return request(assign(ShippingPolicy._count(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		get: function get() {
+			return request(assign(ShippingPolicy._get(), { args: Array.prototype.slice.call(arguments) }));
+		}
+	};
+
+	ShippingPolicy._list = function () {
+
+		return {
+			modelName: ShippingPolicy.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/shipping/policies',
+			params: []
+		};
+	};
+
+	ShippingPolicy._count = function () {
+
+		return {
+			modelName: ShippingPolicy.name,
+			methodName: 'count',
+			httpMethod: 'GET',
+			path: '/v1/shipping/policies/count',
+			params: []
+		};
+	};
+
+	ShippingPolicy._get = function () {
+
+		return {
+			modelName: ShippingPolicy.name,
+			methodName: 'get',
+			httpMethod: 'GET',
+			path: '/v1/shipping/policies/{shippingPolicyId}',
+			params: ['shippingPolicyId']
+		};
+	};
+
+	return ShippingPolicy;
+};
+
+},{"../util/assign":30}],24:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2292,7 +2350,7 @@ module.exports = function (request) {
 	return Store;
 };
 
-},{"../util/assign":29}],24:[function(require,module,exports){
+},{"../util/assign":30}],25:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2419,7 +2477,7 @@ module.exports = function (request) {
 	return Subscription;
 };
 
-},{"../util/assign":29}],25:[function(require,module,exports){
+},{"../util/assign":30}],26:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2476,7 +2534,7 @@ module.exports = function (request) {
 	return SubscriptionPlan;
 };
 
-},{"../util/assign":29}],26:[function(require,module,exports){
+},{"../util/assign":30}],27:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2533,7 +2591,7 @@ module.exports = function (request) {
 	return TaxCategory;
 };
 
-},{"../util/assign":29}],27:[function(require,module,exports){
+},{"../util/assign":30}],28:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2590,7 +2648,7 @@ module.exports = function (request) {
 	return Vendor;
 };
 
-},{"../util/assign":29}],28:[function(require,module,exports){
+},{"../util/assign":30}],29:[function(require,module,exports){
 'use strict';
 
 var assign = require('../util/assign');
@@ -2759,7 +2817,7 @@ module.exports = function (request) {
 	return WishList;
 };
 
-},{"../util/assign":29}],29:[function(require,module,exports){
+},{"../util/assign":30}],30:[function(require,module,exports){
 "use strict";
 
 module.exports = function (dest, source) {
