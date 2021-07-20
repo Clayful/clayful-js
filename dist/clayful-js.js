@@ -618,26 +618,15 @@ module.exports = function (request) {
 	var Brand = {
 		name: 'Brand',
 		path: 'brands',
-		list: function list() {
-			return request(assign(Brand._list(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		count: function count() {
 			return request(assign(Brand._count(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		get: function get() {
 			return request(assign(Brand._get(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		list: function list() {
+			return request(assign(Brand._list(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Brand._list = function () {
-
-		return {
-			modelName: Brand.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/brands',
-			params: []
-		};
 	};
 
 	Brand._count = function () {
@@ -662,6 +651,17 @@ module.exports = function (request) {
 		};
 	};
 
+	Brand._list = function () {
+
+		return {
+			modelName: Brand.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/brands',
+			params: []
+		};
+	};
+
 	return Brand;
 };
 
@@ -675,55 +675,33 @@ module.exports = function (request) {
 	var Cart = {
 		name: 'Cart',
 		path: '',
-		countItemsForMe: function countItemsForMe() {
-			return request(assign(Cart._countItemsForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		getForMe: function getForMe() {
-			return request(assign(Cart._getForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		addItemForMe: function addItemForMe() {
 			return request(assign(Cart._addItemForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		getAsNonRegisteredForMe: function getAsNonRegisteredForMe() {
-			return request(assign(Cart._getAsNonRegisteredForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		checkoutForMe: function checkoutForMe() {
-			return request(assign(Cart._checkoutForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		checkoutAsNonRegisteredForMe: function checkoutAsNonRegisteredForMe() {
 			return request(assign(Cart._checkoutAsNonRegisteredForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		updateItemForMe: function updateItemForMe() {
-			return request(assign(Cart._updateItemForMe(), { args: Array.prototype.slice.call(arguments) }));
+		checkoutForMe: function checkoutForMe() {
+			return request(assign(Cart._checkoutForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		countItemsForMe: function countItemsForMe() {
+			return request(assign(Cart._countItemsForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		deleteItemForMe: function deleteItemForMe() {
+			return request(assign(Cart._deleteItemForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		emptyForMe: function emptyForMe() {
 			return request(assign(Cart._emptyForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		deleteItemForMe: function deleteItemForMe() {
-			return request(assign(Cart._deleteItemForMe(), { args: Array.prototype.slice.call(arguments) }));
+		getAsNonRegisteredForMe: function getAsNonRegisteredForMe() {
+			return request(assign(Cart._getAsNonRegisteredForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		getForMe: function getForMe() {
+			return request(assign(Cart._getForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		updateItemForMe: function updateItemForMe() {
+			return request(assign(Cart._updateItemForMe(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Cart._countItemsForMe = function () {
-
-		return {
-			modelName: Cart.name,
-			methodName: 'countItemsForMe',
-			httpMethod: 'GET',
-			path: '/v1/me/cart/items/count',
-			params: []
-		};
-	};
-
-	Cart._getForMe = function () {
-
-		return {
-			modelName: Cart.name,
-			methodName: 'getForMe',
-			httpMethod: 'POST',
-			path: '/v1/me/cart',
-			params: []
-		};
 	};
 
 	Cart._addItemForMe = function () {
@@ -734,28 +712,6 @@ module.exports = function (request) {
 			httpMethod: 'POST',
 			path: '/v1/me/cart/items',
 			params: []
-		};
-	};
-
-	Cart._getAsNonRegisteredForMe = function () {
-
-		return {
-			modelName: Cart.name,
-			methodName: 'getAsNonRegisteredForMe',
-			httpMethod: 'POST',
-			path: '/v1/me/non-registered/cart',
-			params: []
-		};
-	};
-
-	Cart._checkoutForMe = function () {
-
-		return {
-			modelName: Cart.name,
-			methodName: 'checkoutForMe',
-			httpMethod: 'POST',
-			path: '/v1/me/cart/checkout/{type}',
-			params: ['type']
 		};
 	};
 
@@ -770,12 +726,34 @@ module.exports = function (request) {
 		};
 	};
 
-	Cart._updateItemForMe = function () {
+	Cart._checkoutForMe = function () {
 
 		return {
 			modelName: Cart.name,
-			methodName: 'updateItemForMe',
-			httpMethod: 'PUT',
+			methodName: 'checkoutForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/cart/checkout/{type}',
+			params: ['type']
+		};
+	};
+
+	Cart._countItemsForMe = function () {
+
+		return {
+			modelName: Cart.name,
+			methodName: 'countItemsForMe',
+			httpMethod: 'GET',
+			path: '/v1/me/cart/items/count',
+			params: []
+		};
+	};
+
+	Cart._deleteItemForMe = function () {
+
+		return {
+			modelName: Cart.name,
+			methodName: 'deleteItemForMe',
+			httpMethod: 'DELETE',
 			path: '/v1/me/cart/items/{itemId}',
 			params: ['itemId']
 		};
@@ -792,12 +770,34 @@ module.exports = function (request) {
 		};
 	};
 
-	Cart._deleteItemForMe = function () {
+	Cart._getAsNonRegisteredForMe = function () {
 
 		return {
 			modelName: Cart.name,
-			methodName: 'deleteItemForMe',
-			httpMethod: 'DELETE',
+			methodName: 'getAsNonRegisteredForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/non-registered/cart',
+			params: []
+		};
+	};
+
+	Cart._getForMe = function () {
+
+		return {
+			modelName: Cart.name,
+			methodName: 'getForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/cart',
+			params: []
+		};
+	};
+
+	Cart._updateItemForMe = function () {
+
+		return {
+			modelName: Cart.name,
+			methodName: 'updateItemForMe',
+			httpMethod: 'PUT',
 			path: '/v1/me/cart/items/{itemId}',
 			params: ['itemId']
 		};
@@ -816,26 +816,15 @@ module.exports = function (request) {
 	var Catalog = {
 		name: 'Catalog',
 		path: 'catalogs',
-		list: function list() {
-			return request(assign(Catalog._list(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		count: function count() {
 			return request(assign(Catalog._count(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		get: function get() {
 			return request(assign(Catalog._get(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		list: function list() {
+			return request(assign(Catalog._list(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Catalog._list = function () {
-
-		return {
-			modelName: Catalog.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/catalogs',
-			params: []
-		};
 	};
 
 	Catalog._count = function () {
@@ -860,6 +849,17 @@ module.exports = function (request) {
 		};
 	};
 
+	Catalog._list = function () {
+
+		return {
+			modelName: Catalog.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/catalogs',
+			params: []
+		};
+	};
+
 	return Catalog;
 };
 
@@ -873,26 +873,15 @@ module.exports = function (request) {
 	var Collection = {
 		name: 'Collection',
 		path: 'collections',
-		list: function list() {
-			return request(assign(Collection._list(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		count: function count() {
 			return request(assign(Collection._count(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		get: function get() {
 			return request(assign(Collection._get(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		list: function list() {
+			return request(assign(Collection._list(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Collection._list = function () {
-
-		return {
-			modelName: Collection.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/collections',
-			params: []
-		};
 	};
 
 	Collection._count = function () {
@@ -917,6 +906,17 @@ module.exports = function (request) {
 		};
 	};
 
+	Collection._list = function () {
+
+		return {
+			modelName: Collection.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/collections',
+			params: []
+		};
+	};
+
 	return Collection;
 };
 
@@ -930,26 +930,15 @@ module.exports = function (request) {
 	var Country = {
 		name: 'Country',
 		path: 'countries',
-		list: function list() {
-			return request(assign(Country._list(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		count: function count() {
 			return request(assign(Country._count(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		get: function get() {
 			return request(assign(Country._get(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		list: function list() {
+			return request(assign(Country._list(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Country._list = function () {
-
-		return {
-			modelName: Country.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/countries',
-			params: []
-		};
 	};
 
 	Country._count = function () {
@@ -974,6 +963,17 @@ module.exports = function (request) {
 		};
 	};
 
+	Country._list = function () {
+
+		return {
+			modelName: Country.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/countries',
+			params: []
+		};
+	};
+
 	return Country;
 };
 
@@ -987,26 +987,15 @@ module.exports = function (request) {
 	var Coupon = {
 		name: 'Coupon',
 		path: 'coupons',
-		list: function list() {
-			return request(assign(Coupon._list(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		count: function count() {
 			return request(assign(Coupon._count(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		get: function get() {
 			return request(assign(Coupon._get(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		list: function list() {
+			return request(assign(Coupon._list(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Coupon._list = function () {
-
-		return {
-			modelName: Coupon.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/coupons',
-			params: []
-		};
 	};
 
 	Coupon._count = function () {
@@ -1031,6 +1020,17 @@ module.exports = function (request) {
 		};
 	};
 
+	Coupon._list = function () {
+
+		return {
+			modelName: Coupon.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/coupons',
+			params: []
+		};
+	};
+
 	return Coupon;
 };
 
@@ -1044,26 +1044,15 @@ module.exports = function (request) {
 	var Currency = {
 		name: 'Currency',
 		path: 'currencies',
-		list: function list() {
-			return request(assign(Currency._list(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		count: function count() {
 			return request(assign(Currency._count(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		get: function get() {
 			return request(assign(Currency._get(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		list: function list() {
+			return request(assign(Currency._list(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Currency._list = function () {
-
-		return {
-			modelName: Currency.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/currencies',
-			params: []
-		};
 	};
 
 	Currency._count = function () {
@@ -1088,6 +1077,17 @@ module.exports = function (request) {
 		};
 	};
 
+	Currency._list = function () {
+
+		return {
+			modelName: Currency.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/currencies',
+			params: []
+		};
+	};
+
 	return Currency;
 };
 
@@ -1101,6 +1101,24 @@ module.exports = function (request) {
 	var Customer = {
 		name: 'Customer',
 		path: 'customers',
+		authenticate: function authenticate() {
+			return request(assign(Customer._authenticate(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		authenticateBy3rdParty: function authenticateBy3rdParty() {
+			return request(assign(Customer._authenticateBy3rdParty(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		countCouponsForMe: function countCouponsForMe() {
+			return request(assign(Customer._countCouponsForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		createMe: function createMe() {
+			return request(assign(Customer._createMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		deleteCouponForMe: function deleteCouponForMe() {
+			return request(assign(Customer._deleteCouponForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		deleteMe: function deleteMe() {
+			return request(assign(Customer._deleteMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
 		getMe: function getMe() {
 			return request(assign(Customer._getMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
@@ -1110,45 +1128,93 @@ module.exports = function (request) {
 		listCouponsForMe: function listCouponsForMe() {
 			return request(assign(Customer._listCouponsForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		countCouponsForMe: function countCouponsForMe() {
-			return request(assign(Customer._countCouponsForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		createMe: function createMe() {
-			return request(assign(Customer._createMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		authenticate: function authenticate() {
-			return request(assign(Customer._authenticate(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		authenticateBy3rdParty: function authenticateBy3rdParty() {
-			return request(assign(Customer._authenticateBy3rdParty(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		requestVerificationEmail: function requestVerificationEmail() {
-			return request(assign(Customer._requestVerificationEmail(), { args: Array.prototype.slice.call(arguments) }));
+		recoverCredential: function recoverCredential() {
+			return request(assign(Customer._recoverCredential(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		requestVerification: function requestVerification() {
 			return request(assign(Customer._requestVerification(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		verify: function verify() {
-			return request(assign(Customer._verify(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		recoverCredential: function recoverCredential() {
-			return request(assign(Customer._recoverCredential(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		updateMe: function updateMe() {
-			return request(assign(Customer._updateMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		updateCredentialsForMe: function updateCredentialsForMe() {
-			return request(assign(Customer._updateCredentialsForMe(), { args: Array.prototype.slice.call(arguments) }));
+		requestVerificationEmail: function requestVerificationEmail() {
+			return request(assign(Customer._requestVerificationEmail(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		resetPassword: function resetPassword() {
 			return request(assign(Customer._resetPassword(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		deleteMe: function deleteMe() {
-			return request(assign(Customer._deleteMe(), { args: Array.prototype.slice.call(arguments) }));
+		updateCredentialsForMe: function updateCredentialsForMe() {
+			return request(assign(Customer._updateCredentialsForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		deleteCouponForMe: function deleteCouponForMe() {
-			return request(assign(Customer._deleteCouponForMe(), { args: Array.prototype.slice.call(arguments) }));
+		updateMe: function updateMe() {
+			return request(assign(Customer._updateMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		verify: function verify() {
+			return request(assign(Customer._verify(), { args: Array.prototype.slice.call(arguments) }));
 		}
+	};
+
+	Customer._authenticate = function () {
+
+		return {
+			modelName: Customer.name,
+			methodName: 'authenticate',
+			httpMethod: 'POST',
+			path: '/v1/customers/auth',
+			params: []
+		};
+	};
+
+	Customer._authenticateBy3rdParty = function () {
+
+		return {
+			modelName: Customer.name,
+			methodName: 'authenticateBy3rdParty',
+			httpMethod: 'POST',
+			path: '/v1/customers/auth/{vendor}',
+			params: ['vendor']
+		};
+	};
+
+	Customer._countCouponsForMe = function () {
+
+		return {
+			modelName: Customer.name,
+			methodName: 'countCouponsForMe',
+			httpMethod: 'GET',
+			path: '/v1/me/coupons/count',
+			params: []
+		};
+	};
+
+	Customer._createMe = function () {
+
+		return {
+			modelName: Customer.name,
+			methodName: 'createMe',
+			httpMethod: 'POST',
+			path: '/v1/me',
+			params: []
+		};
+	};
+
+	Customer._deleteCouponForMe = function () {
+
+		return {
+			modelName: Customer.name,
+			methodName: 'deleteCouponForMe',
+			httpMethod: 'DELETE',
+			path: '/v1/me/coupons/{couponId}',
+			params: ['couponId']
+		};
+	};
+
+	Customer._deleteMe = function () {
+
+		return {
+			modelName: Customer.name,
+			methodName: 'deleteMe',
+			httpMethod: 'DELETE',
+			path: '/v1/me',
+			params: []
+		};
 	};
 
 	Customer._getMe = function () {
@@ -1184,58 +1250,14 @@ module.exports = function (request) {
 		};
 	};
 
-	Customer._countCouponsForMe = function () {
+	Customer._recoverCredential = function () {
 
 		return {
 			modelName: Customer.name,
-			methodName: 'countCouponsForMe',
-			httpMethod: 'GET',
-			path: '/v1/me/coupons/count',
-			params: []
-		};
-	};
-
-	Customer._createMe = function () {
-
-		return {
-			modelName: Customer.name,
-			methodName: 'createMe',
+			methodName: 'recoverCredential',
 			httpMethod: 'POST',
-			path: '/v1/me',
-			params: []
-		};
-	};
-
-	Customer._authenticate = function () {
-
-		return {
-			modelName: Customer.name,
-			methodName: 'authenticate',
-			httpMethod: 'POST',
-			path: '/v1/customers/auth',
-			params: []
-		};
-	};
-
-	Customer._authenticateBy3rdParty = function () {
-
-		return {
-			modelName: Customer.name,
-			methodName: 'authenticateBy3rdParty',
-			httpMethod: 'POST',
-			path: '/v1/customers/auth/{vendor}',
-			params: ['vendor']
-		};
-	};
-
-	Customer._requestVerificationEmail = function () {
-
-		return {
-			modelName: Customer.name,
-			methodName: 'requestVerificationEmail',
-			httpMethod: 'POST',
-			path: '/v1/customers/verifications/emails',
-			params: []
+			path: '/v1/customers/credentials/{credentialField}/recoveries/{recoveryMethod}',
+			params: ['credentialField', 'recoveryMethod']
 		};
 	};
 
@@ -1250,46 +1272,13 @@ module.exports = function (request) {
 		};
 	};
 
-	Customer._verify = function () {
+	Customer._requestVerificationEmail = function () {
 
 		return {
 			modelName: Customer.name,
-			methodName: 'verify',
+			methodName: 'requestVerificationEmail',
 			httpMethod: 'POST',
-			path: '/v1/customers/{customerId}/verified',
-			params: ['customerId']
-		};
-	};
-
-	Customer._recoverCredential = function () {
-
-		return {
-			modelName: Customer.name,
-			methodName: 'recoverCredential',
-			httpMethod: 'POST',
-			path: '/v1/customers/credentials/{credentialField}/recoveries/{recoveryMethod}',
-			params: ['credentialField', 'recoveryMethod']
-		};
-	};
-
-	Customer._updateMe = function () {
-
-		return {
-			modelName: Customer.name,
-			methodName: 'updateMe',
-			httpMethod: 'PUT',
-			path: '/v1/me',
-			params: []
-		};
-	};
-
-	Customer._updateCredentialsForMe = function () {
-
-		return {
-			modelName: Customer.name,
-			methodName: 'updateCredentialsForMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/credentials',
+			path: '/v1/customers/verifications/emails',
 			params: []
 		};
 	};
@@ -1305,25 +1294,36 @@ module.exports = function (request) {
 		};
 	};
 
-	Customer._deleteMe = function () {
+	Customer._updateCredentialsForMe = function () {
 
 		return {
 			modelName: Customer.name,
-			methodName: 'deleteMe',
-			httpMethod: 'DELETE',
+			methodName: 'updateCredentialsForMe',
+			httpMethod: 'PUT',
+			path: '/v1/me/credentials',
+			params: []
+		};
+	};
+
+	Customer._updateMe = function () {
+
+		return {
+			modelName: Customer.name,
+			methodName: 'updateMe',
+			httpMethod: 'PUT',
 			path: '/v1/me',
 			params: []
 		};
 	};
 
-	Customer._deleteCouponForMe = function () {
+	Customer._verify = function () {
 
 		return {
 			modelName: Customer.name,
-			methodName: 'deleteCouponForMe',
-			httpMethod: 'DELETE',
-			path: '/v1/me/coupons/{couponId}',
-			params: ['couponId']
+			methodName: 'verify',
+			httpMethod: 'POST',
+			path: '/v1/customers/{customerId}/verified',
+			params: ['customerId']
 		};
 	};
 
@@ -1340,26 +1340,15 @@ module.exports = function (request) {
 	var Group = {
 		name: 'Group',
 		path: 'groups',
-		list: function list() {
-			return request(assign(Group._list(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		count: function count() {
 			return request(assign(Group._count(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		get: function get() {
 			return request(assign(Group._get(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		list: function list() {
+			return request(assign(Group._list(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Group._list = function () {
-
-		return {
-			modelName: Group.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/groups',
-			params: []
-		};
 	};
 
 	Group._count = function () {
@@ -1384,6 +1373,17 @@ module.exports = function (request) {
 		};
 	};
 
+	Group._list = function () {
+
+		return {
+			modelName: Group.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/groups',
+			params: []
+		};
+	};
+
 	return Group;
 };
 
@@ -1397,35 +1397,24 @@ module.exports = function (request) {
 	var Image = {
 		name: 'Image',
 		path: 'images',
-		listForMe: function listForMe() {
-			return request(assign(Image._listForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		countForMe: function countForMe() {
 			return request(assign(Image._countForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		getForMe: function getForMe() {
-			return request(assign(Image._getForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		createForMe: function createForMe() {
 			return request(assign(Image._createForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		updateForMe: function updateForMe() {
-			return request(assign(Image._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		deleteForMe: function deleteForMe() {
 			return request(assign(Image._deleteForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		getForMe: function getForMe() {
+			return request(assign(Image._getForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		listForMe: function listForMe() {
+			return request(assign(Image._listForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		updateForMe: function updateForMe() {
+			return request(assign(Image._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Image._listForMe = function () {
-
-		return {
-			modelName: Image.name,
-			methodName: 'listForMe',
-			httpMethod: 'GET',
-			path: '/v1/me/images',
-			params: []
-		};
 	};
 
 	Image._countForMe = function () {
@@ -1436,17 +1425,6 @@ module.exports = function (request) {
 			httpMethod: 'GET',
 			path: '/v1/me/images/count',
 			params: []
-		};
-	};
-
-	Image._getForMe = function () {
-
-		return {
-			modelName: Image.name,
-			methodName: 'getForMe',
-			httpMethod: 'GET',
-			path: '/v1/me/images/{imageId}',
-			params: ['imageId']
 		};
 	};
 
@@ -1462,6 +1440,39 @@ module.exports = function (request) {
 		};
 	};
 
+	Image._deleteForMe = function () {
+
+		return {
+			modelName: Image.name,
+			methodName: 'deleteForMe',
+			httpMethod: 'DELETE',
+			path: '/v1/me/images/{imageId}',
+			params: ['imageId']
+		};
+	};
+
+	Image._getForMe = function () {
+
+		return {
+			modelName: Image.name,
+			methodName: 'getForMe',
+			httpMethod: 'GET',
+			path: '/v1/me/images/{imageId}',
+			params: ['imageId']
+		};
+	};
+
+	Image._listForMe = function () {
+
+		return {
+			modelName: Image.name,
+			methodName: 'listForMe',
+			httpMethod: 'GET',
+			path: '/v1/me/images',
+			params: []
+		};
+	};
+
 	Image._updateForMe = function () {
 
 		return {
@@ -1471,17 +1482,6 @@ module.exports = function (request) {
 			path: '/v1/me/images/{imageId}',
 			params: ['imageId'],
 			usesFormData: true
-		};
-	};
-
-	Image._deleteForMe = function () {
-
-		return {
-			modelName: Image.name,
-			methodName: 'deleteForMe',
-			httpMethod: 'DELETE',
-			path: '/v1/me/images/{imageId}',
-			params: ['imageId']
 		};
 	};
 
@@ -1532,26 +1532,8 @@ module.exports = function (request) {
 	var Order = {
 		name: 'Order',
 		path: 'orders',
-		listForMe: function listForMe() {
-			return request(assign(Order._listForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		countForMe: function countForMe() {
-			return request(assign(Order._countForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		getForMe: function getForMe() {
-			return request(assign(Order._getForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		listBySubscriptionForMe: function listBySubscriptionForMe() {
-			return request(assign(Order._listBySubscriptionForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		authenticate: function authenticate() {
 			return request(assign(Order._authenticate(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		markAsReceivedForMe: function markAsReceivedForMe() {
-			return request(assign(Order._markAsReceivedForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		requestRefundForMe: function requestRefundForMe() {
-			return request(assign(Order._requestRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		cancelForMe: function cancelForMe() {
 			return request(assign(Order._cancelForMe(), { args: Array.prototype.slice.call(arguments) }));
@@ -1559,37 +1541,77 @@ module.exports = function (request) {
 		cancelRefundForMe: function cancelRefundForMe() {
 			return request(assign(Order._cancelRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
+		countForMe: function countForMe() {
+			return request(assign(Order._countForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
 		createDownloadUrlForMe: function createDownloadUrlForMe() {
 			return request(assign(Order._createDownloadUrlForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		updateForMe: function updateForMe() {
-			return request(assign(Order._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
+		getForMe: function getForMe() {
+			return request(assign(Order._getForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		listBySubscriptionForMe: function listBySubscriptionForMe() {
+			return request(assign(Order._listBySubscriptionForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		listForMe: function listForMe() {
+			return request(assign(Order._listForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		markAsNotReceivedForMe: function markAsNotReceivedForMe() {
+			return request(assign(Order._markAsNotReceivedForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		markAsReceivedForMe: function markAsReceivedForMe() {
+			return request(assign(Order._markAsReceivedForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		requestRefundForMe: function requestRefundForMe() {
+			return request(assign(Order._requestRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		updateCancellationForMe: function updateCancellationForMe() {
 			return request(assign(Order._updateCancellationForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		updateTransactionsForMe: function updateTransactionsForMe() {
-			return request(assign(Order._updateTransactionsForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		updateRefundForMe: function updateRefundForMe() {
-			return request(assign(Order._updateRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
+		updateForMe: function updateForMe() {
+			return request(assign(Order._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		updateRefundCancellationForMe: function updateRefundCancellationForMe() {
 			return request(assign(Order._updateRefundCancellationForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		markAsNotReceivedForMe: function markAsNotReceivedForMe() {
-			return request(assign(Order._markAsNotReceivedForMe(), { args: Array.prototype.slice.call(arguments) }));
+		updateRefundForMe: function updateRefundForMe() {
+			return request(assign(Order._updateRefundForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		updateTransactionsForMe: function updateTransactionsForMe() {
+			return request(assign(Order._updateTransactionsForMe(), { args: Array.prototype.slice.call(arguments) }));
 		}
 	};
 
-	Order._listForMe = function () {
+	Order._authenticate = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'listForMe',
-			httpMethod: 'GET',
-			path: '/v1/me/orders',
-			params: []
+			methodName: 'authenticate',
+			httpMethod: 'POST',
+			path: '/v1/orders/{orderId}/auth',
+			params: ['orderId']
+		};
+	};
+
+	Order._cancelForMe = function () {
+
+		return {
+			modelName: Order.name,
+			methodName: 'cancelForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/orders/{orderId}/cancellation',
+			params: ['orderId']
+		};
+	};
+
+	Order._cancelRefundForMe = function () {
+
+		return {
+			modelName: Order.name,
+			methodName: 'cancelRefundForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/orders/{orderId}/refunds/{refundId}/cancellation',
+			params: ['orderId', 'refundId']
 		};
 	};
 
@@ -1601,6 +1623,18 @@ module.exports = function (request) {
 			httpMethod: 'GET',
 			path: '/v1/me/orders/count',
 			params: []
+		};
+	};
+
+	Order._createDownloadUrlForMe = function () {
+
+		return {
+			modelName: Order.name,
+			methodName: 'createDownloadUrlForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/orders/{orderId}/items/{itemId}/download/url',
+			params: ['orderId', 'itemId'],
+			withoutPayload: true
 		};
 	};
 
@@ -1626,13 +1660,24 @@ module.exports = function (request) {
 		};
 	};
 
-	Order._authenticate = function () {
+	Order._listForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'authenticate',
-			httpMethod: 'POST',
-			path: '/v1/orders/{orderId}/auth',
+			methodName: 'listForMe',
+			httpMethod: 'GET',
+			path: '/v1/me/orders',
+			params: []
+		};
+	};
+
+	Order._markAsNotReceivedForMe = function () {
+
+		return {
+			modelName: Order.name,
+			methodName: 'markAsNotReceivedForMe',
+			httpMethod: 'DELETE',
+			path: '/v1/me/orders/{orderId}/received',
 			params: ['orderId']
 		};
 	};
@@ -1660,37 +1705,14 @@ module.exports = function (request) {
 		};
 	};
 
-	Order._cancelForMe = function () {
+	Order._updateCancellationForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'cancelForMe',
-			httpMethod: 'POST',
+			methodName: 'updateCancellationForMe',
+			httpMethod: 'PUT',
 			path: '/v1/me/orders/{orderId}/cancellation',
 			params: ['orderId']
-		};
-	};
-
-	Order._cancelRefundForMe = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'cancelRefundForMe',
-			httpMethod: 'POST',
-			path: '/v1/me/orders/{orderId}/refunds/{refundId}/cancellation',
-			params: ['orderId', 'refundId']
-		};
-	};
-
-	Order._createDownloadUrlForMe = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'createDownloadUrlForMe',
-			httpMethod: 'POST',
-			path: '/v1/me/orders/{orderId}/items/{itemId}/download/url',
-			params: ['orderId', 'itemId'],
-			withoutPayload: true
 		};
 	};
 
@@ -1705,26 +1727,14 @@ module.exports = function (request) {
 		};
 	};
 
-	Order._updateCancellationForMe = function () {
+	Order._updateRefundCancellationForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'updateCancellationForMe',
+			methodName: 'updateRefundCancellationForMe',
 			httpMethod: 'PUT',
-			path: '/v1/me/orders/{orderId}/cancellation',
-			params: ['orderId']
-		};
-	};
-
-	Order._updateTransactionsForMe = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'updateTransactionsForMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/orders/{orderId}/transactions',
-			params: ['orderId'],
-			withoutPayload: true
+			path: '/v1/me/orders/{orderId}/refunds/{refundId}/cancellation',
+			params: ['orderId', 'refundId']
 		};
 	};
 
@@ -1739,25 +1749,15 @@ module.exports = function (request) {
 		};
 	};
 
-	Order._updateRefundCancellationForMe = function () {
+	Order._updateTransactionsForMe = function () {
 
 		return {
 			modelName: Order.name,
-			methodName: 'updateRefundCancellationForMe',
+			methodName: 'updateTransactionsForMe',
 			httpMethod: 'PUT',
-			path: '/v1/me/orders/{orderId}/refunds/{refundId}/cancellation',
-			params: ['orderId', 'refundId']
-		};
-	};
-
-	Order._markAsNotReceivedForMe = function () {
-
-		return {
-			modelName: Order.name,
-			methodName: 'markAsNotReceivedForMe',
-			httpMethod: 'DELETE',
-			path: '/v1/me/orders/{orderId}/received',
-			params: ['orderId']
+			path: '/v1/me/orders/{orderId}/transactions',
+			params: ['orderId'],
+			withoutPayload: true
 		};
 	};
 
@@ -1774,26 +1774,15 @@ module.exports = function (request) {
 	var OrderTag = {
 		name: 'OrderTag',
 		path: 'orders/tags',
-		list: function list() {
-			return request(assign(OrderTag._list(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		count: function count() {
 			return request(assign(OrderTag._count(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		get: function get() {
 			return request(assign(OrderTag._get(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		list: function list() {
+			return request(assign(OrderTag._list(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	OrderTag._list = function () {
-
-		return {
-			modelName: OrderTag.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/orders/tags',
-			params: []
-		};
 	};
 
 	OrderTag._count = function () {
@@ -1818,6 +1807,17 @@ module.exports = function (request) {
 		};
 	};
 
+	OrderTag._list = function () {
+
+		return {
+			modelName: OrderTag.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/orders/tags',
+			params: []
+		};
+	};
+
 	return OrderTag;
 };
 
@@ -1831,26 +1831,15 @@ module.exports = function (request) {
 	var PaymentMethod = {
 		name: 'PaymentMethod',
 		path: 'payments/methods',
-		list: function list() {
-			return request(assign(PaymentMethod._list(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		count: function count() {
 			return request(assign(PaymentMethod._count(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		get: function get() {
 			return request(assign(PaymentMethod._get(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		list: function list() {
+			return request(assign(PaymentMethod._list(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	PaymentMethod._list = function () {
-
-		return {
-			modelName: PaymentMethod.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/payments/methods',
-			params: []
-		};
 	};
 
 	PaymentMethod._count = function () {
@@ -1875,6 +1864,17 @@ module.exports = function (request) {
 		};
 	};
 
+	PaymentMethod._list = function () {
+
+		return {
+			modelName: PaymentMethod.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/payments/methods',
+			params: []
+		};
+	};
+
 	return PaymentMethod;
 };
 
@@ -1888,26 +1888,15 @@ module.exports = function (request) {
 	var Product = {
 		name: 'Product',
 		path: 'products',
-		list: function list() {
-			return request(assign(Product._list(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		count: function count() {
 			return request(assign(Product._count(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		get: function get() {
 			return request(assign(Product._get(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		list: function list() {
+			return request(assign(Product._list(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Product._list = function () {
-
-		return {
-			modelName: Product.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/products',
-			params: []
-		};
 	};
 
 	Product._count = function () {
@@ -1932,6 +1921,17 @@ module.exports = function (request) {
 		};
 	};
 
+	Product._list = function () {
+
+		return {
+			modelName: Product.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/products',
+			params: []
+		};
+	};
+
 	return Product;
 };
 
@@ -1945,126 +1945,36 @@ module.exports = function (request) {
 	var Review = {
 		name: 'Review',
 		path: 'products/reviews',
-		listPublished: function listPublished() {
-			return request(assign(Review._listPublished(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		countPublished: function countPublished() {
-			return request(assign(Review._countPublished(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		getPublished: function getPublished() {
-			return request(assign(Review._getPublished(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		createForMe: function createForMe() {
-			return request(assign(Review._createForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		flagForMe: function flagForMe() {
-			return request(assign(Review._flagForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		helpedForMe: function helpedForMe() {
-			return request(assign(Review._helpedForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		updateForMe: function updateForMe() {
-			return request(assign(Review._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		deleteForMe: function deleteForMe() {
-			return request(assign(Review._deleteForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		cancelFlagForMe: function cancelFlagForMe() {
 			return request(assign(Review._cancelFlagForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		cancelHelpedForMe: function cancelHelpedForMe() {
 			return request(assign(Review._cancelHelpedForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		countPublished: function countPublished() {
+			return request(assign(Review._countPublished(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		createForMe: function createForMe() {
+			return request(assign(Review._createForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		deleteForMe: function deleteForMe() {
+			return request(assign(Review._deleteForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		flagForMe: function flagForMe() {
+			return request(assign(Review._flagForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		getPublished: function getPublished() {
+			return request(assign(Review._getPublished(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		helpedForMe: function helpedForMe() {
+			return request(assign(Review._helpedForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		listPublished: function listPublished() {
+			return request(assign(Review._listPublished(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		updateForMe: function updateForMe() {
+			return request(assign(Review._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Review._listPublished = function () {
-
-		return {
-			modelName: Review.name,
-			methodName: 'listPublished',
-			httpMethod: 'GET',
-			path: '/v1/products/reviews/published',
-			params: []
-		};
-	};
-
-	Review._countPublished = function () {
-
-		return {
-			modelName: Review.name,
-			methodName: 'countPublished',
-			httpMethod: 'GET',
-			path: '/v1/products/reviews/published/count',
-			params: []
-		};
-	};
-
-	Review._getPublished = function () {
-
-		return {
-			modelName: Review.name,
-			methodName: 'getPublished',
-			httpMethod: 'GET',
-			path: '/v1/products/reviews/published/{reviewId}',
-			params: ['reviewId']
-		};
-	};
-
-	Review._createForMe = function () {
-
-		return {
-			modelName: Review.name,
-			methodName: 'createForMe',
-			httpMethod: 'POST',
-			path: '/v1/me/products/reviews',
-			params: []
-		};
-	};
-
-	Review._flagForMe = function () {
-
-		return {
-			modelName: Review.name,
-			methodName: 'flagForMe',
-			httpMethod: 'POST',
-			path: '/v1/me/products/reviews/{reviewId}/flags',
-			params: ['reviewId'],
-			withoutPayload: true
-		};
-	};
-
-	Review._helpedForMe = function () {
-
-		return {
-			modelName: Review.name,
-			methodName: 'helpedForMe',
-			httpMethod: 'POST',
-			path: '/v1/me/products/reviews/{reviewId}/helped/{upDown}',
-			params: ['reviewId', 'upDown'],
-			withoutPayload: true
-		};
-	};
-
-	Review._updateForMe = function () {
-
-		return {
-			modelName: Review.name,
-			methodName: 'updateForMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/products/reviews/{reviewId}',
-			params: ['reviewId']
-		};
-	};
-
-	Review._deleteForMe = function () {
-
-		return {
-			modelName: Review.name,
-			methodName: 'deleteForMe',
-			httpMethod: 'DELETE',
-			path: '/v1/me/products/reviews/{reviewId}',
-			params: ['reviewId']
-		};
 	};
 
 	Review._cancelFlagForMe = function () {
@@ -2089,6 +1999,96 @@ module.exports = function (request) {
 		};
 	};
 
+	Review._countPublished = function () {
+
+		return {
+			modelName: Review.name,
+			methodName: 'countPublished',
+			httpMethod: 'GET',
+			path: '/v1/products/reviews/published/count',
+			params: []
+		};
+	};
+
+	Review._createForMe = function () {
+
+		return {
+			modelName: Review.name,
+			methodName: 'createForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/products/reviews',
+			params: []
+		};
+	};
+
+	Review._deleteForMe = function () {
+
+		return {
+			modelName: Review.name,
+			methodName: 'deleteForMe',
+			httpMethod: 'DELETE',
+			path: '/v1/me/products/reviews/{reviewId}',
+			params: ['reviewId']
+		};
+	};
+
+	Review._flagForMe = function () {
+
+		return {
+			modelName: Review.name,
+			methodName: 'flagForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/products/reviews/{reviewId}/flags',
+			params: ['reviewId'],
+			withoutPayload: true
+		};
+	};
+
+	Review._getPublished = function () {
+
+		return {
+			modelName: Review.name,
+			methodName: 'getPublished',
+			httpMethod: 'GET',
+			path: '/v1/products/reviews/published/{reviewId}',
+			params: ['reviewId']
+		};
+	};
+
+	Review._helpedForMe = function () {
+
+		return {
+			modelName: Review.name,
+			methodName: 'helpedForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/products/reviews/{reviewId}/helped/{upDown}',
+			params: ['reviewId', 'upDown'],
+			withoutPayload: true
+		};
+	};
+
+	Review._listPublished = function () {
+
+		return {
+			modelName: Review.name,
+			methodName: 'listPublished',
+			httpMethod: 'GET',
+			path: '/v1/products/reviews/published',
+			params: []
+		};
+	};
+
+	Review._updateForMe = function () {
+
+		return {
+			modelName: Review.name,
+			methodName: 'updateForMe',
+			httpMethod: 'PUT',
+			path: '/v1/me/products/reviews/{reviewId}',
+			params: ['reviewId']
+		};
+	};
+
 	return Review;
 };
 
@@ -2102,40 +2102,40 @@ module.exports = function (request) {
 	var ReviewComment = {
 		name: 'ReviewComment',
 		path: 'products/reviews/comments',
-		list: function list() {
-			return request(assign(ReviewComment._list(), { args: Array.prototype.slice.call(arguments) }));
+		cancelFlagForMe: function cancelFlagForMe() {
+			return request(assign(ReviewComment._cancelFlagForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		count: function count() {
 			return request(assign(ReviewComment._count(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		get: function get() {
-			return request(assign(ReviewComment._get(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		createForMe: function createForMe() {
 			return request(assign(ReviewComment._createForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		flagForMe: function flagForMe() {
-			return request(assign(ReviewComment._flagForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		updateForMe: function updateForMe() {
-			return request(assign(ReviewComment._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		deleteForMe: function deleteForMe() {
 			return request(assign(ReviewComment._deleteForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		cancelFlagForMe: function cancelFlagForMe() {
-			return request(assign(ReviewComment._cancelFlagForMe(), { args: Array.prototype.slice.call(arguments) }));
+		flagForMe: function flagForMe() {
+			return request(assign(ReviewComment._flagForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		get: function get() {
+			return request(assign(ReviewComment._get(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		list: function list() {
+			return request(assign(ReviewComment._list(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		updateForMe: function updateForMe() {
+			return request(assign(ReviewComment._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
 		}
 	};
 
-	ReviewComment._list = function () {
+	ReviewComment._cancelFlagForMe = function () {
 
 		return {
 			modelName: ReviewComment.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/products/reviews/comments',
-			params: []
+			methodName: 'cancelFlagForMe',
+			httpMethod: 'DELETE',
+			path: '/v1/me/products/reviews/comments/{reviewCommentId}/flags',
+			params: ['reviewCommentId']
 		};
 	};
 
@@ -2150,17 +2150,6 @@ module.exports = function (request) {
 		};
 	};
 
-	ReviewComment._get = function () {
-
-		return {
-			modelName: ReviewComment.name,
-			methodName: 'get',
-			httpMethod: 'GET',
-			path: '/v1/products/reviews/comments/{reviewCommentId}',
-			params: ['reviewCommentId']
-		};
-	};
-
 	ReviewComment._createForMe = function () {
 
 		return {
@@ -2169,6 +2158,17 @@ module.exports = function (request) {
 			httpMethod: 'POST',
 			path: '/v1/me/products/reviews/comments',
 			params: []
+		};
+	};
+
+	ReviewComment._deleteForMe = function () {
+
+		return {
+			modelName: ReviewComment.name,
+			methodName: 'deleteForMe',
+			httpMethod: 'DELETE',
+			path: '/v1/me/products/reviews/comments/{reviewCommentId}',
+			params: ['reviewCommentId']
 		};
 	};
 
@@ -2184,6 +2184,28 @@ module.exports = function (request) {
 		};
 	};
 
+	ReviewComment._get = function () {
+
+		return {
+			modelName: ReviewComment.name,
+			methodName: 'get',
+			httpMethod: 'GET',
+			path: '/v1/products/reviews/comments/{reviewCommentId}',
+			params: ['reviewCommentId']
+		};
+	};
+
+	ReviewComment._list = function () {
+
+		return {
+			modelName: ReviewComment.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/products/reviews/comments',
+			params: []
+		};
+	};
+
 	ReviewComment._updateForMe = function () {
 
 		return {
@@ -2191,28 +2213,6 @@ module.exports = function (request) {
 			methodName: 'updateForMe',
 			httpMethod: 'PUT',
 			path: '/v1/me/products/reviews/comments/{reviewCommentId}',
-			params: ['reviewCommentId']
-		};
-	};
-
-	ReviewComment._deleteForMe = function () {
-
-		return {
-			modelName: ReviewComment.name,
-			methodName: 'deleteForMe',
-			httpMethod: 'DELETE',
-			path: '/v1/me/products/reviews/comments/{reviewCommentId}',
-			params: ['reviewCommentId']
-		};
-	};
-
-	ReviewComment._cancelFlagForMe = function () {
-
-		return {
-			modelName: ReviewComment.name,
-			methodName: 'cancelFlagForMe',
-			httpMethod: 'DELETE',
-			path: '/v1/me/products/reviews/comments/{reviewCommentId}/flags',
 			params: ['reviewCommentId']
 		};
 	};
@@ -2230,26 +2230,15 @@ module.exports = function (request) {
 	var ShippingMethod = {
 		name: 'ShippingMethod',
 		path: 'shipping/methods',
-		list: function list() {
-			return request(assign(ShippingMethod._list(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		count: function count() {
 			return request(assign(ShippingMethod._count(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		get: function get() {
 			return request(assign(ShippingMethod._get(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		list: function list() {
+			return request(assign(ShippingMethod._list(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	ShippingMethod._list = function () {
-
-		return {
-			modelName: ShippingMethod.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/shipping/methods',
-			params: []
-		};
 	};
 
 	ShippingMethod._count = function () {
@@ -2274,6 +2263,17 @@ module.exports = function (request) {
 		};
 	};
 
+	ShippingMethod._list = function () {
+
+		return {
+			modelName: ShippingMethod.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/shipping/methods',
+			params: []
+		};
+	};
+
 	return ShippingMethod;
 };
 
@@ -2287,26 +2287,15 @@ module.exports = function (request) {
 	var ShippingPolicy = {
 		name: 'ShippingPolicy',
 		path: 'shipping/policies',
-		list: function list() {
-			return request(assign(ShippingPolicy._list(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		count: function count() {
 			return request(assign(ShippingPolicy._count(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		get: function get() {
 			return request(assign(ShippingPolicy._get(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		list: function list() {
+			return request(assign(ShippingPolicy._list(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	ShippingPolicy._list = function () {
-
-		return {
-			modelName: ShippingPolicy.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/shipping/policies',
-			params: []
-		};
 	};
 
 	ShippingPolicy._count = function () {
@@ -2328,6 +2317,17 @@ module.exports = function (request) {
 			httpMethod: 'GET',
 			path: '/v1/shipping/policies/{shippingPolicyId}',
 			params: ['shippingPolicyId']
+		};
+	};
+
+	ShippingPolicy._list = function () {
+
+		return {
+			modelName: ShippingPolicy.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/shipping/policies',
+			params: []
 		};
 	};
 
@@ -2373,8 +2373,11 @@ module.exports = function (request) {
 	var Subscription = {
 		name: 'Subscription',
 		path: 'subscriptions',
-		listForMe: function listForMe() {
-			return request(assign(Subscription._listForMe(), { args: Array.prototype.slice.call(arguments) }));
+		authenticate: function authenticate() {
+			return request(assign(Subscription._authenticate(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		cancelForMe: function cancelForMe() {
+			return request(assign(Subscription._cancelForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		countForMe: function countForMe() {
 			return request(assign(Subscription._countForMe(), { args: Array.prototype.slice.call(arguments) }));
@@ -2382,31 +2385,39 @@ module.exports = function (request) {
 		getForMe: function getForMe() {
 			return request(assign(Subscription._getForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		authenticate: function authenticate() {
-			return request(assign(Subscription._authenticate(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		cancelForMe: function cancelForMe() {
-			return request(assign(Subscription._cancelForMe(), { args: Array.prototype.slice.call(arguments) }));
+		listForMe: function listForMe() {
+			return request(assign(Subscription._listForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		scheduleForMe: function scheduleForMe() {
 			return request(assign(Subscription._scheduleForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		updateForMe: function updateForMe() {
-			return request(assign(Subscription._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		updateCancellationForMe: function updateCancellationForMe() {
 			return request(assign(Subscription._updateCancellationForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		updateForMe: function updateForMe() {
+			return request(assign(Subscription._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
 		}
 	};
 
-	Subscription._listForMe = function () {
+	Subscription._authenticate = function () {
 
 		return {
 			modelName: Subscription.name,
-			methodName: 'listForMe',
-			httpMethod: 'GET',
-			path: '/v1/me/subscriptions',
-			params: []
+			methodName: 'authenticate',
+			httpMethod: 'POST',
+			path: '/v1/subscriptions/{subscriptionId}/auth',
+			params: ['subscriptionId']
+		};
+	};
+
+	Subscription._cancelForMe = function () {
+
+		return {
+			modelName: Subscription.name,
+			methodName: 'cancelForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/subscriptions/{subscriptionId}/cancellation',
+			params: ['subscriptionId']
 		};
 	};
 
@@ -2432,25 +2443,14 @@ module.exports = function (request) {
 		};
 	};
 
-	Subscription._authenticate = function () {
+	Subscription._listForMe = function () {
 
 		return {
 			modelName: Subscription.name,
-			methodName: 'authenticate',
-			httpMethod: 'POST',
-			path: '/v1/subscriptions/{subscriptionId}/auth',
-			params: ['subscriptionId']
-		};
-	};
-
-	Subscription._cancelForMe = function () {
-
-		return {
-			modelName: Subscription.name,
-			methodName: 'cancelForMe',
-			httpMethod: 'POST',
-			path: '/v1/me/subscriptions/{subscriptionId}/cancellation',
-			params: ['subscriptionId']
+			methodName: 'listForMe',
+			httpMethod: 'GET',
+			path: '/v1/me/subscriptions',
+			params: []
 		};
 	};
 
@@ -2465,17 +2465,6 @@ module.exports = function (request) {
 		};
 	};
 
-	Subscription._updateForMe = function () {
-
-		return {
-			modelName: Subscription.name,
-			methodName: 'updateForMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/subscriptions/{subscriptionId}',
-			params: ['subscriptionId']
-		};
-	};
-
 	Subscription._updateCancellationForMe = function () {
 
 		return {
@@ -2483,6 +2472,17 @@ module.exports = function (request) {
 			methodName: 'updateCancellationForMe',
 			httpMethod: 'PUT',
 			path: '/v1/me/subscriptions/{subscriptionId}/cancellation',
+			params: ['subscriptionId']
+		};
+	};
+
+	Subscription._updateForMe = function () {
+
+		return {
+			modelName: Subscription.name,
+			methodName: 'updateForMe',
+			httpMethod: 'PUT',
+			path: '/v1/me/subscriptions/{subscriptionId}',
 			params: ['subscriptionId']
 		};
 	};
@@ -2500,26 +2500,15 @@ module.exports = function (request) {
 	var SubscriptionPlan = {
 		name: 'SubscriptionPlan',
 		path: 'subscriptions/plans',
-		list: function list() {
-			return request(assign(SubscriptionPlan._list(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		count: function count() {
 			return request(assign(SubscriptionPlan._count(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		get: function get() {
 			return request(assign(SubscriptionPlan._get(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		list: function list() {
+			return request(assign(SubscriptionPlan._list(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	SubscriptionPlan._list = function () {
-
-		return {
-			modelName: SubscriptionPlan.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/subscriptions/plans',
-			params: []
-		};
 	};
 
 	SubscriptionPlan._count = function () {
@@ -2544,6 +2533,17 @@ module.exports = function (request) {
 		};
 	};
 
+	SubscriptionPlan._list = function () {
+
+		return {
+			modelName: SubscriptionPlan.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/subscriptions/plans',
+			params: []
+		};
+	};
+
 	return SubscriptionPlan;
 };
 
@@ -2557,26 +2557,15 @@ module.exports = function (request) {
 	var TaxCategory = {
 		name: 'TaxCategory',
 		path: 'taxes/categories',
-		list: function list() {
-			return request(assign(TaxCategory._list(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		count: function count() {
 			return request(assign(TaxCategory._count(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		get: function get() {
 			return request(assign(TaxCategory._get(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		list: function list() {
+			return request(assign(TaxCategory._list(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	TaxCategory._list = function () {
-
-		return {
-			modelName: TaxCategory.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/taxes/categories',
-			params: []
-		};
 	};
 
 	TaxCategory._count = function () {
@@ -2601,6 +2590,17 @@ module.exports = function (request) {
 		};
 	};
 
+	TaxCategory._list = function () {
+
+		return {
+			modelName: TaxCategory.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/taxes/categories',
+			params: []
+		};
+	};
+
 	return TaxCategory;
 };
 
@@ -2614,26 +2614,15 @@ module.exports = function (request) {
 	var Vendor = {
 		name: 'Vendor',
 		path: 'vendors',
-		list: function list() {
-			return request(assign(Vendor._list(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		count: function count() {
 			return request(assign(Vendor._count(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		get: function get() {
 			return request(assign(Vendor._get(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		list: function list() {
+			return request(assign(Vendor._list(), { args: Array.prototype.slice.call(arguments) }));
 		}
-	};
-
-	Vendor._list = function () {
-
-		return {
-			modelName: Vendor.name,
-			methodName: 'list',
-			httpMethod: 'GET',
-			path: '/v1/vendors',
-			params: []
-		};
 	};
 
 	Vendor._count = function () {
@@ -2658,6 +2647,17 @@ module.exports = function (request) {
 		};
 	};
 
+	Vendor._list = function () {
+
+		return {
+			modelName: Vendor.name,
+			methodName: 'list',
+			httpMethod: 'GET',
+			path: '/v1/vendors',
+			params: []
+		};
+	};
+
 	return Vendor;
 };
 
@@ -2671,17 +2671,11 @@ module.exports = function (request) {
 	var WishList = {
 		name: 'WishList',
 		path: 'wishlists',
-		listForMe: function listForMe() {
-			return request(assign(WishList._listForMe(), { args: Array.prototype.slice.call(arguments) }));
+		addItemForMe: function addItemForMe() {
+			return request(assign(WishList._addItemForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		countForMe: function countForMe() {
 			return request(assign(WishList._countForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		getForMe: function getForMe() {
-			return request(assign(WishList._getForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		listProductsForMe: function listProductsForMe() {
-			return request(assign(WishList._listProductsForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		countProductsForMe: function countProductsForMe() {
 			return request(assign(WishList._countProductsForMe(), { args: Array.prototype.slice.call(arguments) }));
@@ -2689,31 +2683,37 @@ module.exports = function (request) {
 		createForMe: function createForMe() {
 			return request(assign(WishList._createForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		addItemForMe: function addItemForMe() {
-			return request(assign(WishList._addItemForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
-		updateForMe: function updateForMe() {
-			return request(assign(WishList._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
-		},
 		deleteForMe: function deleteForMe() {
 			return request(assign(WishList._deleteForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		deleteItemForMe: function deleteItemForMe() {
+			return request(assign(WishList._deleteItemForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
 		emptyForMe: function emptyForMe() {
 			return request(assign(WishList._emptyForMe(), { args: Array.prototype.slice.call(arguments) }));
 		},
-		deleteItemForMe: function deleteItemForMe() {
-			return request(assign(WishList._deleteItemForMe(), { args: Array.prototype.slice.call(arguments) }));
+		getForMe: function getForMe() {
+			return request(assign(WishList._getForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		listForMe: function listForMe() {
+			return request(assign(WishList._listForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		listProductsForMe: function listProductsForMe() {
+			return request(assign(WishList._listProductsForMe(), { args: Array.prototype.slice.call(arguments) }));
+		},
+		updateForMe: function updateForMe() {
+			return request(assign(WishList._updateForMe(), { args: Array.prototype.slice.call(arguments) }));
 		}
 	};
 
-	WishList._listForMe = function () {
+	WishList._addItemForMe = function () {
 
 		return {
 			modelName: WishList.name,
-			methodName: 'listForMe',
-			httpMethod: 'GET',
-			path: '/v1/me/wishlists',
-			params: []
+			methodName: 'addItemForMe',
+			httpMethod: 'POST',
+			path: '/v1/me/wishlists/{wishListId}/items',
+			params: ['wishListId']
 		};
 	};
 
@@ -2725,28 +2725,6 @@ module.exports = function (request) {
 			httpMethod: 'GET',
 			path: '/v1/me/wishlists/count',
 			params: []
-		};
-	};
-
-	WishList._getForMe = function () {
-
-		return {
-			modelName: WishList.name,
-			methodName: 'getForMe',
-			httpMethod: 'GET',
-			path: '/v1/me/wishlists/{wishListId}',
-			params: ['wishListId']
-		};
-	};
-
-	WishList._listProductsForMe = function () {
-
-		return {
-			modelName: WishList.name,
-			methodName: 'listProductsForMe',
-			httpMethod: 'GET',
-			path: '/v1/me/wishlists/{wishListId}/products',
-			params: ['wishListId']
 		};
 	};
 
@@ -2772,28 +2750,6 @@ module.exports = function (request) {
 		};
 	};
 
-	WishList._addItemForMe = function () {
-
-		return {
-			modelName: WishList.name,
-			methodName: 'addItemForMe',
-			httpMethod: 'POST',
-			path: '/v1/me/wishlists/{wishListId}/items',
-			params: ['wishListId']
-		};
-	};
-
-	WishList._updateForMe = function () {
-
-		return {
-			modelName: WishList.name,
-			methodName: 'updateForMe',
-			httpMethod: 'PUT',
-			path: '/v1/me/wishlists/{wishListId}',
-			params: ['wishListId']
-		};
-	};
-
 	WishList._deleteForMe = function () {
 
 		return {
@@ -2802,6 +2758,17 @@ module.exports = function (request) {
 			httpMethod: 'DELETE',
 			path: '/v1/me/wishlists/{wishListId}',
 			params: ['wishListId']
+		};
+	};
+
+	WishList._deleteItemForMe = function () {
+
+		return {
+			modelName: WishList.name,
+			methodName: 'deleteItemForMe',
+			httpMethod: 'DELETE',
+			path: '/v1/me/wishlists/{wishListId}/items/{productId}',
+			params: ['wishListId', 'productId']
 		};
 	};
 
@@ -2816,14 +2783,47 @@ module.exports = function (request) {
 		};
 	};
 
-	WishList._deleteItemForMe = function () {
+	WishList._getForMe = function () {
 
 		return {
 			modelName: WishList.name,
-			methodName: 'deleteItemForMe',
-			httpMethod: 'DELETE',
-			path: '/v1/me/wishlists/{wishListId}/items/{productId}',
-			params: ['wishListId', 'productId']
+			methodName: 'getForMe',
+			httpMethod: 'GET',
+			path: '/v1/me/wishlists/{wishListId}',
+			params: ['wishListId']
+		};
+	};
+
+	WishList._listForMe = function () {
+
+		return {
+			modelName: WishList.name,
+			methodName: 'listForMe',
+			httpMethod: 'GET',
+			path: '/v1/me/wishlists',
+			params: []
+		};
+	};
+
+	WishList._listProductsForMe = function () {
+
+		return {
+			modelName: WishList.name,
+			methodName: 'listProductsForMe',
+			httpMethod: 'GET',
+			path: '/v1/me/wishlists/{wishListId}/products',
+			params: ['wishListId']
+		};
+	};
+
+	WishList._updateForMe = function () {
+
+		return {
+			modelName: WishList.name,
+			methodName: 'updateForMe',
+			httpMethod: 'PUT',
+			path: '/v1/me/wishlists/{wishListId}',
+			params: ['wishListId']
 		};
 	};
 
